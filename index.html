@@ -5,58 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>almentor — Project Portfolio Dashboard</title>
   <meta name="description" content="Live project portfolio performance dashboard for almentor executive team" />
+  <meta property="og:title" content="almentor — Project Portfolio Dashboard" />
+  <meta property="og:description" content="Real-time portfolio intelligence — revenue, collections, margin health" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0A0A0A" />
 
-  <!-- Favicon (red dash on black, mimicking the logo mark) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Crect x='18' y='26' width='28' height='6' fill='%23ED1C24'/%3E%3C/svg%3E" />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Libraries (UMD, no build step) — load order matters: React → PropTypes → Recharts -->
+  <!-- Pre-compiled — no Babel-standalone runtime. -->
   <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script crossorigin src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-  <script crossorigin src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
   <style>
+    /* ============================ Theme tokens ============================ */
     :root {
-      /* Almentor brand */
       --brand-black: #0A0A0A;
       --brand-red: #ED1C24;
       --brand-red-soft: #FEE7E8;
       --brand-teal: #0B7A9E;
       --brand-teal-soft: #E0F0F5;
       --brand-gray: #E8E8E8;
-
-      /* Surfaces */
       --bg: #FAFAF7;
       --surface: #FFFFFF;
       --surface-2: #F5F5F0;
       --border: #E8E8E2;
       --border-strong: #D4D4CC;
-
-      /* Text */
       --text: #0A0A0A;
       --text-2: #4A4A45;
       --text-3: #8A8A82;
       --text-inv: #FFFFFF;
-
-      /* Semantic */
       --good: #0F7A4D;
       --good-soft: #E3F5EC;
       --warn: #B8711A;
       --warn-soft: #FBEFDB;
       --bad: #ED1C24;
       --bad-soft: #FEE7E8;
-
-      /* Typography */
+      --chart-grid: #EEEEE8;
+      --topbar-bg: #0A0A0A;
+      --topbar-text: #FFFFFF;
+      --topbar-text-soft: rgba(255,255,255,0.7);
       --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
-
       --radius: 10px;
       --radius-sm: 6px;
       --radius-lg: 14px;
@@ -64,21 +60,38 @@
       --shadow: 0 2px 6px rgba(10, 10, 10, 0.05), 0 1px 2px rgba(10, 10, 10, 0.04);
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    /* Dark theme */
+    html[data-theme="dark"] {
+      --bg: #0E1014;
+      --surface: #161A20;
+      --surface-2: #1C2128;
+      --border: #262B33;
+      --border-strong: #353B45;
+      --text: #F2F4F7;
+      --text-2: #B6BBC4;
+      --text-3: #8A909B;
+      --text-inv: #0A0A0A;
+      --brand-red-soft: #4A1418;
+      --brand-teal-soft: #0F2C36;
+      --good-soft: #0F2A20;
+      --warn-soft: #3A2810;
+      --bad-soft: #3A1416;
+      --chart-grid: #262B33;
+      --topbar-bg: #07080B;
+      --topbar-text: #F2F4F7;
+      --topbar-text-soft: rgba(255,255,255,0.65);
     }
 
+    /* ============================ Reset / base ============================ */
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: var(--font-ui);
       background: var(--bg);
       color: var(--text);
       font-feature-settings: "ss01", "cv11";
+      transition: background-color 0.2s, color 0.2s;
     }
-
     body {
       min-height: 100vh;
       background-image:
@@ -86,287 +99,166 @@
         radial-gradient(circle at 85% 95%, rgba(11, 122, 158, 0.03) 0%, transparent 40%);
     }
 
-    /* Top bar */
+    /* Skip link for keyboard users */
+    .skip-link {
+      position: absolute;
+      left: -10000px; top: auto;
+      width: 1px; height: 1px; overflow: hidden;
+      background: var(--brand-red); color: #fff;
+      padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      z-index: 100;
+    }
+    .skip-link:focus {
+      left: 16px; top: 12px; width: auto; height: auto;
+      outline: 2px solid #fff; outline-offset: 2px;
+    }
+
+    /* Focus visible */
+    button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--brand-red);
+      outline-offset: 2px;
+    }
+
+    /* ============================ Top bar ============================ */
     .topbar {
-      background: var(--brand-black);
-      color: var(--text-inv);
-      padding: 16px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      background: var(--topbar-bg); color: var(--topbar-text);
+      padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; position: sticky; top: 0; z-index: 50;
       border-bottom: 3px solid var(--brand-red);
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
+    .brand { display: flex; align-items: center; gap: 14px; }
     .brand-logo {
-      position: relative;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #fff;
-      padding-top: 8px;
+      position: relative; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--topbar-text); padding-top: 8px;
     }
     .brand-logo::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 22px;
-      width: 24px;
-      height: 3px;
-      background: var(--brand-red);
+      content: ""; position: absolute; top: 0; left: 22px;
+      width: 24px; height: 3px; background: var(--brand-red);
     }
-
-    .brand-divider {
-      width: 1px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.15);
+    .brand-divider { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.15); }
+    .brand-sub { font-size: 13px; font-weight: 500; color: var(--topbar-text-soft); letter-spacing: 0.01em; }
+    .topbar-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--topbar-text-soft); }
+    .topbar-btn {
+      background: rgba(255,255,255,0.08); color: var(--topbar-text); border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; font-family: var(--font-ui);
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
     }
-
-    .brand-sub {
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.7);
-      letter-spacing: 0.01em;
-    }
-
-    .topbar-meta {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.7);
-    }
+    .topbar-btn:hover { background: rgba(255,255,255,0.16); }
+    .topbar-btn:active { transform: scale(0.97); }
+    .topbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .topbar-btn.theme-toggle { width: 60px; }
 
     .live-dot {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      font-weight: 500;
-      letter-spacing: 0.02em;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08); font-weight: 500; letter-spacing: 0.02em;
     }
     .live-dot .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22C55E;
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #22C55E; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
       animation: pulse 2s infinite;
     }
     .live-dot.snapshot .dot { background: #F59E0B; animation: none; }
     .live-dot.error .dot { background: var(--brand-red); animation: none; }
-
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
       70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
       100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
 
-    /* Container */
-    .container {
-      max-width: 1680px;
-      margin: 0 auto;
-      padding: 28px;
-    }
-
-    /* Headline */
-    .headline {
-      margin-bottom: 24px;
-    }
+    /* ============================ Container & headline ============================ */
+    .container { max-width: 1680px; margin: 0 auto; padding: 28px; }
+    .headline { margin-bottom: 24px; }
     .headline h1 {
-      font-size: 34px;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      margin: 0 0 6px 0;
-      line-height: 1.1;
+      font-size: 34px; font-weight: 800; letter-spacing: -0.025em;
+      margin: 0 0 6px 0; line-height: 1.1; color: var(--text);
     }
-    .headline h1 .accent {
-      color: var(--brand-red);
-    }
-    .headline p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--text-2);
-      max-width: 720px;
-    }
+    .headline h1 .accent { color: var(--brand-red); }
+    .headline p { margin: 0; font-size: 14px; color: var(--text-2); max-width: 720px; }
 
-    /* Filters */
+    /* ============================ Filters ============================ */
     .filters {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-      align-items: end;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; align-items: start;
     }
-
     .filter-group label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-3);
-      margin-bottom: 6px;
+      display: block; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-3); margin-bottom: 6px;
     }
-
-    .filter-group select,
-    .filter-group input {
-      width: 100%;
-      padding: 9px 10px;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-ui);
-      font-size: 13px;
-      font-weight: 500;
-      background: var(--surface);
-      color: var(--text);
-      outline: none;
+    .filter-group input[type="search"], .filter-group input[type="date"], .filter-group select {
+      width: 100%; padding: 9px 10px;
+      border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      background: var(--surface); color: var(--text); outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .filter-group select:focus,
     .filter-group input:focus {
-      border-color: var(--brand-black);
-      box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.08);
+      border-color: var(--text); box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.15);
     }
-
+    .filter-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; justify-content: flex-end; }
     .filter-reset {
-      background: var(--brand-black);
-      color: #fff;
-      border: none;
-      padding: 9px 14px;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-      letter-spacing: 0.02em;
+      background: var(--text); color: var(--surface); border: none;
+      padding: 9px 14px; border-radius: var(--radius-sm);
+      font-family: var(--font-ui); font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: background 0.15s; letter-spacing: 0.02em;
     }
-    .filter-reset:hover { background: #333; }
+    .filter-reset:hover { opacity: 0.85; }
+    .filter-count { font-size: 12px; color: var(--text-3); font-weight: 500; padding: 4px 0; }
+    .filter-count strong { color: var(--brand-red); font-weight: 700; font-family: var(--font-mono); }
 
-    .filter-count {
-      font-size: 12px;
-      color: var(--text-3);
-      font-weight: 500;
-      padding: 9px 0;
-    }
-    .filter-count strong {
-      color: var(--brand-red);
-      font-weight: 700;
-      font-family: var(--font-mono);
-    }
-
-    /* Chip multi-select */
-    .chip-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 4px; }
     .chip {
-      font-size: 11px;
-      padding: 5px 9px;
-      border-radius: 14px;
-      border: 1px solid var(--border-strong);
-      background: var(--surface);
-      color: var(--text-2);
-      cursor: pointer;
-      font-family: var(--font-ui);
-      font-weight: 500;
-      transition: all 0.12s;
-      user-select: none;
+      font-size: 11px; padding: 5px 9px; border-radius: 14px;
+      border: 1px solid var(--border-strong); background: var(--surface);
+      color: var(--text-2); cursor: pointer;
+      font-family: var(--font-ui); font-weight: 500;
+      transition: all 0.12s; user-select: none;
     }
-    .chip:hover { border-color: var(--brand-black); }
-    .chip.active {
-      background: var(--brand-black);
-      color: #fff;
-      border-color: var(--brand-black);
-    }
+    .chip:hover { border-color: var(--text); }
+    .chip.active { background: var(--text); color: var(--text-inv); border-color: var(--text); }
 
-    /* KPI Strip */
-    .kpi-strip {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
+    /* ============================ KPI Strip ============================ */
+    .kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
     .kpi {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 18px 16px 18px;
-      position: relative;
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+      position: relative; overflow: hidden;
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .kpi:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow);
-    }
+    .kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
     .kpi .kpi-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-3);
-      margin-bottom: 10px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 10px;
     }
     .kpi .kpi-value {
-      font-family: var(--font-mono);
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      line-height: 1.05;
+      font-family: var(--font-mono); font-size: 26px; font-weight: 600;
+      letter-spacing: -0.02em; color: var(--text); line-height: 1.05;
       font-variant-numeric: tabular-nums;
     }
     .kpi .kpi-value.negative { color: var(--brand-red); }
     .kpi .kpi-value.positive { color: var(--good); }
-    .kpi .kpi-sub {
-      font-size: 11px;
-      color: var(--text-3);
-      margin-top: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .kpi .kpi-sub { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+    .kpi .kpi-delta {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      margin-top: 6px; display: inline-block; padding: 2px 6px;
+      border-radius: 4px; letter-spacing: 0.02em;
     }
+    .kpi .kpi-delta.positive { color: var(--good); background: var(--good-soft); }
+    .kpi .kpi-delta.negative { color: var(--brand-red); background: var(--bad-soft); }
     .kpi .kpi-accent {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--brand-red);
+      position: absolute; top: 0; left: 0;
+      width: 3px; height: 100%; background: var(--brand-red);
     }
     .kpi.kpi-teal .kpi-accent { background: var(--brand-teal); }
     .kpi.kpi-green .kpi-accent { background: var(--good); }
     .kpi.kpi-warn .kpi-accent { background: var(--warn); }
-    .kpi.kpi-black .kpi-accent { background: var(--brand-black); }
+    .kpi.kpi-black .kpi-accent { background: var(--text); }
     .kpi.kpi-gray .kpi-accent { background: var(--text-3); }
 
-    /* Grid */
-    .grid-12 {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
+    /* ============================ Grid & Card ============================ */
+    .grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 16px; }
     .col-3 { grid-column: span 3; }
     .col-4 { grid-column: span 4; }
     .col-5 { grid-column: span 5; }
@@ -376,165 +268,66 @@
     .col-9 { grid-column: span 9; }
     .col-12 { grid-column: span 12; }
 
-    /* Card */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
-    .card-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      gap: 12px;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
     .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: var(--text);
+      display: flex; align-items: center; gap: 8px; margin: 0;
     }
     .card-title::before {
-      content: "";
-      width: 4px;
-      height: 14px;
-      background: var(--brand-red);
-      border-radius: 1px;
+      content: ""; width: 4px; height: 14px; background: var(--brand-red); border-radius: 1px;
     }
-    .card-subtitle {
-      font-size: 11px;
-      color: var(--text-3);
-      font-weight: 500;
-    }
+    .card-subtitle { font-size: 11px; color: var(--text-3); font-weight: 500; }
 
-    /* Insights */
+    /* ============================ Insights ============================ */
     .insights {
       background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%);
-      color: #fff;
-      border-radius: var(--radius);
-      padding: 24px 28px;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
+      color: #fff; border-radius: var(--radius); padding: 24px 28px;
+      margin-bottom: 20px; position: relative; overflow: hidden;
     }
     .insights::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 240px;
-      height: 100%;
+      content: ""; position: absolute; top: 0; right: 0; width: 240px; height: 100%;
       background: radial-gradient(circle at top right, rgba(237, 28, 36, 0.2), transparent 60%);
       pointer-events: none;
     }
-    .insights-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .insights-header h3 {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #fff;
+    .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .insights-header h2 {
+      margin: 0; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: #fff;
     }
     .insights-header .badge {
-      font-size: 9px;
-      padding: 3px 7px;
-      border-radius: 10px;
-      background: var(--brand-red);
-      color: #fff;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      font-size: 9px; padding: 3px 7px; border-radius: 10px;
+      background: var(--brand-red); color: #fff; font-weight: 700; letter-spacing: 0.08em;
     }
-    .insights-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-    .insight {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .insight .icon {
-      font-size: 20px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .insight .body {
-      font-size: 12.5px;
-      line-height: 1.5;
-      color: rgba(255, 255, 255, 0.85);
-    }
-    .insight .body strong {
-      color: #fff;
-      font-weight: 700;
-    }
-    .insight .body .num {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-    }
+    .insights-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .insight { display: flex; gap: 12px; align-items: flex-start; }
+    .insight .icon { font-size: 20px; flex-shrink: 0; line-height: 1; color: var(--brand-red); font-weight: 800; }
+    .insight .body { font-size: 12.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); }
+    .insight .body strong { color: #fff; font-weight: 700; }
+    .insight .body .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-    /* Table */
-    .table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: 12.5px;
-    }
+    /* ============================ Table ============================ */
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
     .table th {
-      text-align: left;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-3);
-      padding: 8px 10px;
+      text-align: left; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-3); padding: 8px 10px;
       border-bottom: 1px solid var(--border);
-      background: var(--surface-2);
-      position: sticky;
-      top: 0;
+      background: var(--surface-2); position: sticky; top: 0;
     }
-    .table td {
-      padding: 10px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      vertical-align: middle;
-    }
+    .table th:hover { background: var(--border); color: var(--text); }
+    .table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
     .table tbody tr:hover { background: var(--surface-2); }
-    .table .num {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      text-align: right;
-      font-weight: 500;
-    }
-    .table .num.negative { color: var(--brand-red); }
-    .table .num.positive { color: var(--good); }
+    .table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; font-weight: 500; }
+    .table .num .negative, .table td .negative { color: var(--brand-red); }
+    .table .num .positive, .table td .positive { color: var(--good); }
 
     .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 10.5px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 8px; border-radius: 10px; font-size: 10.5px;
+      font-weight: 600; letter-spacing: 0.02em;
     }
-    .status-pill .pill-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
+    .status-pill .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
     .status-ontrack { background: var(--good-soft); color: var(--good); }
     .status-ontrack .pill-dot { background: var(--good); }
     .status-atrisk { background: var(--warn-soft); color: var(--warn); }
@@ -543,244 +336,176 @@
     .status-critical .pill-dot { background: var(--bad); }
     .status-inprogress { background: var(--brand-teal-soft); color: var(--brand-teal); }
     .status-inprogress .pill-dot { background: var(--brand-teal); }
-    .status-completed { background: #F0F0EA; color: var(--text-2); }
+    .status-completed, .status-pending { background: var(--surface-2); color: var(--text-2); }
     .status-completed .pill-dot { background: var(--text-2); }
-    .status-pending { background: #F0F0EA; color: var(--text-2); }
     .status-pending .pill-dot { background: var(--text-3); }
 
-    .table-scroll {
-      max-height: 420px;
-      overflow-y: auto;
-      margin: -20px -20px -20px -20px;
-      padding: 0 20px;
-    }
+    .table-scroll { max-height: 480px; overflow-y: auto; margin: -20px; padding: 0 20px; }
 
-    /* Gantt */
-    .gantt {
-      font-size: 12px;
+    /* ============================ Donut center ============================ */
+    .donut-center {
+      position: absolute; top: 42%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center; pointer-events: none;
     }
+    .donut-num { font-size: 26px; font-weight: 700; font-family: var(--font-mono); letter-spacing: -0.02em; color: var(--text); }
+    .donut-label { font-size: 10px; color: var(--text-3); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+
+    /* ============================ Gantt ============================ */
+    .gantt { font-size: 12px; }
     .gantt-row {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px dashed var(--border);
-      gap: 12px;
+      display: grid; grid-template-columns: 200px 1fr;
+      align-items: center; padding: 6px 0;
+      border-bottom: 1px dashed var(--border); gap: 12px;
     }
     .gantt-row:last-child { border-bottom: none; }
     .gantt-label {
-      font-size: 11.5px;
-      font-weight: 500;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11.5px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .gantt-track {
-      position: relative;
-      height: 22px;
-      background: var(--surface-2);
-      border-radius: 4px;
-    }
+    .gantt-track { position: relative; height: 22px; background: var(--surface-2); border-radius: 4px; }
     .gantt-bar {
-      position: absolute;
-      top: 2px;
-      height: 18px;
-      border-radius: 3px;
-      display: flex;
-      align-items: center;
-      padding: 0 6px;
-      font-size: 10px;
-      font-weight: 600;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
+      position: absolute; top: 2px; height: 18px; border-radius: 3px;
+      display: flex; align-items: center; padding: 0 6px;
+      font-size: 10px; font-weight: 600; color: #fff;
+      white-space: nowrap; overflow: hidden;
     }
     .gantt-bar.ontrack { background: var(--good); }
     .gantt-bar.atrisk { background: var(--warn); }
     .gantt-bar.critical { background: var(--bad); }
     .gantt-axis {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--text-3);
-      margin-top: 8px;
-      padding-left: 212px;
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--text-3); margin-top: 8px; padding-left: 212px;
     }
 
-    /* Waterfall */
-    .waterfall-labels {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .waterfall-step {
-      text-align: center;
-    }
+    /* ============================ Waterfall ============================ */
+    .waterfall-labels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 14px; }
+    .waterfall-step { text-align: center; }
     .waterfall-step .step-name {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-3);
-      margin-bottom: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 4px;
     }
     .waterfall-step .step-value {
-      font-family: var(--font-mono);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+      color: var(--text); font-variant-numeric: tabular-nums;
     }
-    .waterfall-step .step-pct {
-      font-size: 10px;
-      color: var(--brand-red);
-      font-weight: 600;
-      margin-top: 2px;
-    }
+    .waterfall-step .step-pct { font-size: 10px; color: var(--brand-red); font-weight: 600; margin-top: 2px; }
 
-    /* PM Scorecard */
+    /* ============================ PM Scorecard ============================ */
+    .pm-header {
+      display: grid; grid-template-columns: 200px 80px 1fr 80px;
+      gap: 12px; padding: 0 0 8px 0; font-size: 10px;
+      font-weight: 700; color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 0.08em; border-bottom: 2px solid var(--border);
+    }
     .pm-row {
-      display: grid;
-      grid-template-columns: 200px 80px 1fr 80px;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
+      display: grid; grid-template-columns: 200px 80px 1fr 80px;
+      gap: 12px; align-items: center; padding: 10px 0;
+      border-bottom: 1px solid var(--border); font-size: 12px;
     }
     .pm-row:last-child { border-bottom: none; }
+    .pm-row-clickable { cursor: pointer; transition: background 0.12s; border-radius: 6px; padding: 10px; margin: 0 -10px; }
+    .pm-row-clickable:hover { background: var(--surface-2); }
+    .pm-row-clickable:focus { background: var(--surface-2); }
     .pm-name { font-weight: 600; color: var(--text); }
     .pm-projects { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
-    .pm-health-bar {
-      display: flex;
-      height: 10px;
-      border-radius: 2px;
-      overflow: hidden;
-      background: var(--surface-2);
-    }
+    .pm-health-bar { display: flex; height: 10px; border-radius: 2px; overflow: hidden; background: var(--surface-2); }
     .pm-health-bar .seg-ontrack { background: var(--good); }
     .pm-health-bar .seg-atrisk { background: var(--warn); }
     .pm-health-bar .seg-critical { background: var(--bad); }
     .pm-value {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      text-align: right; font-variant-numeric: tabular-nums;
     }
     .pm-value.negative { color: var(--brand-red); }
     .pm-value.positive { color: var(--good); }
 
-    /* Recharts customization */
+    /* ============================ Recharts overrides ============================ */
     .recharts-cartesian-axis-tick-value {
       font-family: var(--font-mono) !important;
-      font-size: 10.5px !important;
-      fill: var(--text-3) !important;
+      font-size: 10.5px !important; fill: var(--text-3) !important;
     }
-    .recharts-legend-item-text {
-      font-size: 11.5px !important;
-      color: var(--text-2) !important;
-    }
+    .recharts-legend-item-text { font-size: 11.5px !important; color: var(--text-2) !important; }
     .recharts-default-tooltip {
-      border-radius: 8px !important;
-      border: 1px solid var(--border-strong) !important;
-      box-shadow: var(--shadow) !important;
-      font-family: var(--font-ui) !important;
-      font-size: 12px !important;
+      border-radius: 8px !important; border: 1px solid var(--border-strong) !important;
+      box-shadow: var(--shadow) !important; font-family: var(--font-ui) !important;
+      font-size: 12px !important; background: var(--surface) !important; color: var(--text) !important;
     }
+    .recharts-tooltip-wrapper .recharts-default-tooltip { background: var(--surface) !important; }
+
     .custom-tooltip {
-      background: var(--brand-black);
-      color: #fff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      font-family: var(--font-ui);
+      background: #0A0A0A; color: #fff;
+      padding: 10px 12px; border-radius: 8px; font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25); font-family: var(--font-ui);
     }
     .custom-tooltip .tt-title {
-      font-weight: 700;
-      margin-bottom: 6px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.7);
+      font-weight: 700; margin-bottom: 6px; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.7);
     }
     .custom-tooltip .tt-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      padding: 2px 0;
+      display: flex; justify-content: space-between; gap: 16px;
+      font-family: var(--font-mono); font-size: 11.5px; padding: 2px 0;
     }
     .custom-tooltip .tt-row .tt-label { color: rgba(255,255,255,0.7); }
 
-    /* Loading & empty states */
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 60px;
-      color: var(--text-3);
-      font-size: 14px;
-    }
+    /* ============================ Loading & empty ============================ */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-3); font-size: 14px; }
     .loading-spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--border);
-      border-top-color: var(--brand-red);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 10px;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border); border-top-color: var(--brand-red);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
-    .empty-state {
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-3);
-      font-size: 13px;
-    }
-
-    /* Footer */
+    /* ============================ Footer ============================ */
     .footer {
-      margin-top: 32px;
-      padding: 20px 0;
+      margin-top: 32px; padding: 20px 0;
       border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-3);
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--text-3);
     }
 
-    /* Responsive */
-    @media (max-width: 1200px) {
-      .filters { grid-template-columns: repeat(3, 1fr); }
+    /* ============================ Error banner ============================ */
+    .error-banner {
+      background: var(--bad-soft); border: 1px solid var(--brand-red); color: var(--brand-red);
+      padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px;
+      margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+
+    /* ============================ Scrollbar ============================ */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+    /* ============================ Responsive ============================ */
+    @media (max-width: 1400px) {
+      .filters { grid-template-columns: repeat(4, 1fr); }
       .kpi-strip { grid-template-columns: repeat(3, 1fr); }
       .insights-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 1100px) {
+      .filters { grid-template-columns: repeat(2, 1fr); }
       .col-3, .col-4, .col-5 { grid-column: span 6; }
       .col-6, .col-7, .col-8, .col-9 { grid-column: span 12; }
     }
-
     @media (max-width: 720px) {
       .topbar { padding: 14px 16px; flex-wrap: wrap; }
       .container { padding: 16px; }
-      .filters { grid-template-columns: 1fr 1fr; }
+      .filters { grid-template-columns: 1fr; }
       .kpi-strip { grid-template-columns: 1fr 1fr; }
       .insights-grid { grid-template-columns: 1fr; }
       .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9 { grid-column: span 12; }
       .headline h1 { font-size: 26px; }
       .waterfall-labels { grid-template-columns: repeat(5, 1fr); font-size: 9px; }
       .waterfall-step .step-value { font-size: 11px; }
-      .gantt-row { grid-template-columns: 120px 1fr; }
-      .topbar-meta { font-size: 10px; gap: 10px; }
+      .gantt-row, .pm-row, .pm-header { grid-template-columns: 120px 1fr; }
+      .pm-header span:nth-child(2), .pm-header span:nth-child(4),
+      .pm-row .pm-projects, .pm-row .pm-value { display: none; }
+      .topbar-meta { font-size: 10px; gap: 8px; flex-wrap: wrap; }
+      .topbar-btn { padding: 5px 9px; font-size: 11px; }
     }
-
-    /* TV / Big display mode — auto-activates on very wide screens */
     @media (min-width: 1920px) {
       .container { max-width: 1920px; padding: 36px; }
       .headline h1 { font-size: 42px; }
@@ -788,31 +513,26 @@
       .card-title { font-size: 16px; }
     }
 
-    /* Error banner */
-    .error-banner {
-      background: var(--bad-soft);
-      border: 1px solid var(--brand-red);
-      color: var(--brand-red);
-      padding: 12px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* ============================ Print ============================ */
+    @media print {
+      html, body { background: #fff !important; color: #000 !important; }
+      .topbar { position: static !important; background: #fff !important; color: #000 !important; border-bottom: 2px solid #000; }
+      .topbar-btn, .topbar-meta button { display: none; }
+      .filters, .skip-link { display: none !important; }
+      .card { break-inside: avoid; box-shadow: none !important; border: 1px solid #ccc !important; }
+      .insights { background: #f5f5f0 !important; color: #000 !important; }
+      .insight .body { color: #000 !important; }
+      .insight .body strong { color: #000 !important; }
+      .insights-header h2 { color: #000 !important; }
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-    /* Print */
-    @media print {
-      .topbar { position: static; }
-      .filters { display: none; }
-      .card { break-inside: avoid; }
+    /* ============================ Reduced motion ============================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -824,1322 +544,2185 @@
     </div>
   </div>
 
-  <script type="text/babel">
-    // ============================================================
-    // almentor — Project Portfolio Dashboard
-    // Single-file React dashboard (no build step)
-    // ============================================================
-    //
-    // DATA SOURCE:
-    // 1. In Google Sheets: File → Share → Publish to web
-    // 2. Choose the sheet and "Comma-separated values (.csv)"
-    // 3. Click Publish, copy the generated URL
-    // 4. Paste it into SHEET_CSV_URL below (replaces the empty string)
-    //
-    // If SHEET_CSV_URL is empty or fails, the dashboard falls back
-    // to the embedded snapshot so it always works.
-    // ============================================================
-
+  <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpaaF_rXtVeEnsKzkccK_Mbs5h9OiqYaANZjWCBhuec6LvkMPNPXMstqFLkYXD593eG_toMQPxfM3n/pub?gid=0&single=true&output=csv";
-
-    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // auto-refresh every 5 minutes
-
-    // Embedded snapshot (from original sheet) — used as fallback
-    const FALLBACK_DATA = [
-      {"Project Manager":"Sarah Johnson","Project Name":"E-Learning Platform Revamp","Operational Status":"Pending","Health Status":"On Track","Start Date":"04-Jun-2023","End Date":"02-Sep-2023","Project Duration (Months)":3,"Currency":"EGP","Contracted Revenues / Currency":1755144,"Contracted Revenues (USD)":36858,"Recognition Value (USD)":20825,"Invoiced Revenues (USD)":12737,"Not Invoiced Revenues (USD)":8088,"Collected Revenues (USD)":11394,"Unpaid Revenues (USD)":1343,"Cost Basline (USD)":23473,"Actual Costs (USD)":27155,"GP Baseline (USD)":13385,"GP Actual / Cash Flow (USD)":-15761},
-      {"Project Manager":"Ahmed Hassan","Project Name":"Corporate Training Suite","Operational Status":"In Progress","Health Status":"Critical","Start Date":"19-Jan-2023","End Date":"13-May-2024","Project Duration (Months)":16,"Currency":"USD","Contracted Revenues / Currency":266653,"Contracted Revenues (USD)":266653,"Recognition Value (USD)":111429,"Invoiced Revenues (USD)":67896,"Not Invoiced Revenues (USD)":43533,"Collected Revenues (USD)":54462,"Unpaid Revenues (USD)":13434,"Cost Basline (USD)":109138,"Actual Costs (USD)":95991,"GP Baseline (USD)":157515,"GP Actual / Cash Flow (USD)":-41529},
-      {"Project Manager":"Maria Garcia","Project Name":"Digital Skills Academy","Operational Status":"Completed","Health Status":"At Risk","Start Date":"23-Jun-2023","End Date":"15-Oct-2024","Project Duration (Months)":16,"Currency":"AED","Contracted Revenues / Currency":662297,"Contracted Revenues (USD)":180145,"Recognition Value (USD)":120612,"Invoiced Revenues (USD)":77083,"Not Invoiced Revenues (USD)":43529,"Collected Revenues (USD)":73053,"Unpaid Revenues (USD)":4030,"Cost Basline (USD)":119901,"Actual Costs (USD)":103578,"GP Baseline (USD)":60244,"GP Actual / Cash Flow (USD)":-30525},
-      {"Project Manager":"John Smith","Project Name":"AI Literacy Program","Operational Status":"In Progress","Health Status":"On Track","Start Date":"11-Apr-2023","End Date":"06-Mar-2024","Project Duration (Months)":11,"Currency":"SAR","Contracted Revenues / Currency":526064,"Contracted Revenues (USD)":140459,"Recognition Value (USD)":74329,"Invoiced Revenues (USD)":65539,"Not Invoiced Revenues (USD)":8790,"Collected Revenues (USD)":42003,"Unpaid Revenues (USD)":23536,"Cost Basline (USD)":74861,"Actual Costs (USD)":70638,"GP Baseline (USD)":65598,"GP Actual / Cash Flow (USD)":-28635},
-      {"Project Manager":"Lena Müller","Project Name":"Leadership Development Portal","Operational Status":"Completed","Health Status":"Critical","Start Date":"20-Mar-2023","End Date":"13-Feb-2024","Project Duration (Months)":11,"Currency":"USD","Contracted Revenues / Currency":1892670,"Contracted Revenues (USD)":1892670,"Recognition Value (USD)":806410,"Invoiced Revenues (USD)":588447,"Not Invoiced Revenues (USD)":217963,"Collected Revenues (USD)":382450,"Unpaid Revenues (USD)":205997,"Cost Basline (USD)":1368028,"Actual Costs (USD)":1137543,"GP Baseline (USD)":524642,"GP Actual / Cash Flow (USD)":-755093},
-      {"Project Manager":"Omar Khalid","Project Name":"Healthcare eLearning Hub","Operational Status":"In Progress","Health Status":"At Risk","Start Date":"27-Mar-2023","End Date":"20-May-2024","Project Duration (Months)":14,"Currency":"EGP","Contracted Revenues / Currency":1410795,"Contracted Revenues (USD)":29627,"Recognition Value (USD)":15269,"Invoiced Revenues (USD)":8166,"Not Invoiced Revenues (USD)":7103,"Collected Revenues (USD)":7060,"Unpaid Revenues (USD)":1106,"Cost Basline (USD)":19867,"Actual Costs (USD)":23723,"GP Baseline (USD)":9760,"GP Actual / Cash Flow (USD)":-16663},
-      {"Project Manager":"Priya Patel","Project Name":"Retail Onboarding System","Operational Status":"Pending","Health Status":"On Track","Start Date":"28-Feb-2023","End Date":"27-Aug-2023","Project Duration (Months)":6,"Currency":"AED","Contracted Revenues / Currency":997182,"Contracted Revenues (USD)":271234,"Recognition Value (USD)":153731,"Invoiced Revenues (USD)":125728,"Not Invoiced Revenues (USD)":28003,"Collected Revenues (USD)":93785,"Unpaid Revenues (USD)":31943,"Cost Basline (USD)":143636,"Actual Costs (USD)":126946,"GP Baseline (USD)":127598,"GP Actual / Cash Flow (USD)":-33161},
-      {"Project Manager":"David Lee","Project Name":"STEM Education Initiative","Operational Status":"In Progress","Health Status":"Critical","Start Date":"23-Mar-2023","End Date":"20-Aug-2023","Project Duration (Months)":5,"Currency":"EGP","Contracted Revenues / Currency":1477440,"Contracted Revenues (USD)":31026,"Recognition Value (USD)":24231,"Invoiced Revenues (USD)":18587,"Not Invoiced Revenues (USD)":5644,"Collected Revenues (USD)":12972,"Unpaid Revenues (USD)":5615,"Cost Basline (USD)":17430,"Actual Costs (USD)":15826,"GP Baseline (USD)":13596,"GP Actual / Cash Flow (USD)":-2854},
-      {"Project Manager":"Sarah Johnson","Project Name":"Language Learning App","Operational Status":"Completed","Health Status":"At Risk","Start Date":"23-Jun-2023","End Date":"18-Apr-2024","Project Duration (Months)":10,"Currency":"USD","Contracted Revenues / Currency":1635740,"Contracted Revenues (USD)":1635740,"Recognition Value (USD)":972561,"Invoiced Revenues (USD)":859896,"Not Invoiced Revenues (USD)":112665,"Collected Revenues (USD)":535178,"Unpaid Revenues (USD)":324718,"Cost Basline (USD)":1124785,"Actual Costs (USD)":1262029,"GP Baseline (USD)":510955,"GP Actual / Cash Flow (USD)":-726851},
-      {"Project Manager":"Ahmed Hassan","Project Name":"Compliance Training Module","Operational Status":"In Progress","Health Status":"On Track","Start Date":"09-Apr-2023","End Date":"06-Sep-2023","Project Duration (Months)":5,"Currency":"AED","Contracted Revenues / Currency":642463,"Contracted Revenues (USD)":174750,"Recognition Value (USD)":165642,"Invoiced Revenues (USD)":129795,"Not Invoiced Revenues (USD)":35847,"Collected Revenues (USD)":115150,"Unpaid Revenues (USD)":14645,"Cost Basline (USD)":82905,"Actual Costs (USD)":82880,"GP Baseline (USD)":91845,"GP Actual / Cash Flow (USD)":32270},
-      {"Project Manager":"Maria Garcia","Project Name":"Sales Enablement Platform","Operational Status":"Completed","Health Status":"Critical","Start Date":"15-Jun-2023","End Date":"11-Jan-2024","Project Duration (Months)":7,"Currency":"SAR","Contracted Revenues / Currency":755493,"Contracted Revenues (USD)":201717,"Recognition Value (USD)":97586,"Invoiced Revenues (USD)":85143,"Not Invoiced Revenues (USD)":12443,"Collected Revenues (USD)":69442,"Unpaid Revenues (USD)":15701,"Cost Basline (USD)":133427,"Actual Costs (USD)":129607,"GP Baseline (USD)":68290,"GP Actual / Cash Flow (USD)":-60165},
-      {"Project Manager":"John Smith","Project Name":"Customer Success Bootcamp","Operational Status":"In Progress","Health Status":"At Risk","Start Date":"13-May-2023","End Date":"06-Jul-2024","Project Duration (Months)":14,"Currency":"USD","Contracted Revenues / Currency":659948,"Contracted Revenues (USD)":659948,"Recognition Value (USD)":658889,"Invoiced Revenues (USD)":375017,"Not Invoiced Revenues (USD)":283872,"Collected Revenues (USD)":299041,"Unpaid Revenues (USD)":75976,"Cost Basline (USD)":438551,"Actual Costs (USD)":501896,"GP Baseline (USD)":221397,"GP Actual / Cash Flow (USD)":-202855}
-    ];
-
-    // ============================================================
-    // Utilities
-    // ============================================================
-
-    const parseNum = (v) => {
-      if (v === null || v === undefined || v === "") return 0;
-      if (typeof v === "number") return v;
-      const s = String(v).replace(/,/g, "").replace(/[^\d.\-]/g, "");
-      const n = parseFloat(s);
-      return isNaN(n) ? 0 : n;
-    };
-
-    const parseDate = (s) => {
-      if (!s) return null;
-      if (s instanceof Date) return s;
-      // Formats: "04-Jun-2023", "2023-06-04", "6/4/2023"
-      const str = String(s).trim();
-      // "04-Jun-2023" format
-      const m = str.match(/^(\d{1,2})[-\/\s]([A-Za-z]{3,})[-\/\s](\d{4})$/);
-      if (m) {
-        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        const month = months.findIndex(mo => mo.toLowerCase() === m[2].toLowerCase().slice(0,3));
-        if (month >= 0) return new Date(parseInt(m[3]), month, parseInt(m[1]));
-      }
-      const d = new Date(str);
-      return isNaN(d.getTime()) ? null : d;
-    };
-
-    const fmtMoney = (n) => {
-      if (n === null || n === undefined || isNaN(n)) return "$0";
-      const neg = n < 0;
-      const abs = Math.abs(n);
-      let s;
-      if (abs >= 1_000_000) s = "$" + (abs / 1_000_000).toFixed(2) + "M";
-      else if (abs >= 1_000) s = "$" + (abs / 1_000).toFixed(1) + "K";
-      else s = "$" + Math.round(abs).toLocaleString();
-      return neg ? "-" + s : s;
-    };
-
-    const fmtMoneyFull = (n) => {
-      if (n === null || n === undefined || isNaN(n)) return "$0";
-      const neg = n < 0;
-      const abs = Math.abs(n);
-      return (neg ? "-" : "") + "$" + Math.round(abs).toLocaleString();
-    };
-
-    const fmtPct = (n) => {
-      if (n === null || n === undefined || isNaN(n)) return "0%";
-      return (n >= 0 ? "" : "") + n.toFixed(1) + "%";
-    };
-
-    const fmtDate = (d) => {
-      if (!d) return "—";
-      return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    };
-
-    // Normalize row (data from CSV vs embedded)
-    const NUM_FIELDS = [
-      "Project Duration (Months)",
-      "Contracted Revenues / Currency",
-      "Contracted Revenues (USD)",
-      "Recognition Value (USD)",
-      "Invoiced Revenues (USD)",
-      "Not Invoiced Revenues (USD)",
-      "Collected Revenues (USD)",
-      "Unpaid Revenues (USD)",
-      "Cost Basline (USD)",
-      "Actual Costs (USD)",
-      "GP Baseline (USD)",
-      "GP Actual / Cash Flow (USD)"
-    ];
-
-    const normalizeRow = (row) => {
-      const out = { ...row };
-      NUM_FIELDS.forEach(f => { out[f] = parseNum(row[f]); });
-      out._startDate = parseDate(row["Start Date"]);
-      out._endDate = parseDate(row["End Date"]);
-      // Derived metrics
-      out._gpMarginBaselinePct = out["Contracted Revenues (USD)"] > 0
-        ? (out["GP Baseline (USD)"] / out["Contracted Revenues (USD)"]) * 100 : 0;
-      out._gpMarginActualPct = out["Recognition Value (USD)"] > 0
-        ? (out["GP Actual / Cash Flow (USD)"] / out["Recognition Value (USD)"]) * 100 : 0;
-      out._costOverrunPct = out["Cost Basline (USD)"] > 0
-        ? ((out["Actual Costs (USD)"] - out["Cost Basline (USD)"]) / out["Cost Basline (USD)"]) * 100 : 0;
-      out._collectionRate = out["Invoiced Revenues (USD)"] > 0
-        ? (out["Collected Revenues (USD)"] / out["Invoiced Revenues (USD)"]) * 100 : 0;
-      return out;
-    };
-
-    // ============================================================
-    // Recharts destructure
-    // ============================================================
-    const {
-      BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, ScatterChart, Scatter,
-      XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ReferenceLine, LabelList, ZAxis
-    } = Recharts;
-
-    const BRAND_RED = "#ED1C24";
-    const BRAND_TEAL = "#0B7A9E";
-    const BRAND_BLACK = "#0A0A0A";
-    const BRAND_GRAY = "#E8E8E8";
-    const COLOR_GOOD = "#0F7A4D";
-    const COLOR_WARN = "#B8711A";
-    const COLOR_BAD = BRAND_RED;
-    const COLOR_ONTRACK = COLOR_GOOD;
-    const COLOR_ATRISK = COLOR_WARN;
-    const COLOR_CRITICAL = COLOR_BAD;
-
-    // ============================================================
-    // Data hook
-    // ============================================================
-    const useDashboardData = () => {
-      const [state, setState] = React.useState({
-        rows: [],
-        loading: true,
-        source: "loading", // 'live' | 'snapshot' | 'error'
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const FALLBACK_DATA = [{
+  "Project Manager": "Sarah Johnson",
+  "Project Name": "E-Learning Platform Revamp",
+  "Operational Status": "Pending",
+  "Health Status": "On Track",
+  "Start Date": "04-Jun-2023",
+  "End Date": "02-Sep-2023",
+  "Project Duration (Months)": 3,
+  "Currency": "EGP",
+  "Contracted Revenues / Currency": 1755144,
+  "Contracted Revenues (USD)": 36858,
+  "Recognition Value (USD)": 20825,
+  "Invoiced Revenues (USD)": 12737,
+  "Not Invoiced Revenues (USD)": 8088,
+  "Collected Revenues (USD)": 11394,
+  "Unpaid Revenues (USD)": 1343,
+  "Cost Basline (USD)": 23473,
+  "Actual Costs (USD)": 27155,
+  "GP Baseline (USD)": 13385,
+  "GP Actual / Cash Flow (USD)": -15761
+}, {
+  "Project Manager": "Ahmed Hassan",
+  "Project Name": "Corporate Training Suite",
+  "Operational Status": "In Progress",
+  "Health Status": "Critical",
+  "Start Date": "19-Jan-2023",
+  "End Date": "13-May-2024",
+  "Project Duration (Months)": 16,
+  "Currency": "USD",
+  "Contracted Revenues / Currency": 266653,
+  "Contracted Revenues (USD)": 266653,
+  "Recognition Value (USD)": 111429,
+  "Invoiced Revenues (USD)": 67896,
+  "Not Invoiced Revenues (USD)": 43533,
+  "Collected Revenues (USD)": 54462,
+  "Unpaid Revenues (USD)": 13434,
+  "Cost Basline (USD)": 109138,
+  "Actual Costs (USD)": 95991,
+  "GP Baseline (USD)": 157515,
+  "GP Actual / Cash Flow (USD)": -41529
+}, {
+  "Project Manager": "Maria Garcia",
+  "Project Name": "Digital Skills Academy",
+  "Operational Status": "Completed",
+  "Health Status": "At Risk",
+  "Start Date": "23-Jun-2023",
+  "End Date": "15-Oct-2024",
+  "Project Duration (Months)": 16,
+  "Currency": "AED",
+  "Contracted Revenues / Currency": 662297,
+  "Contracted Revenues (USD)": 180145,
+  "Recognition Value (USD)": 120612,
+  "Invoiced Revenues (USD)": 77083,
+  "Not Invoiced Revenues (USD)": 43529,
+  "Collected Revenues (USD)": 73053,
+  "Unpaid Revenues (USD)": 4030,
+  "Cost Basline (USD)": 119901,
+  "Actual Costs (USD)": 103578,
+  "GP Baseline (USD)": 60244,
+  "GP Actual / Cash Flow (USD)": -30525
+}, {
+  "Project Manager": "John Smith",
+  "Project Name": "AI Literacy Program",
+  "Operational Status": "In Progress",
+  "Health Status": "On Track",
+  "Start Date": "11-Apr-2023",
+  "End Date": "06-Mar-2024",
+  "Project Duration (Months)": 11,
+  "Currency": "SAR",
+  "Contracted Revenues / Currency": 526064,
+  "Contracted Revenues (USD)": 140459,
+  "Recognition Value (USD)": 74329,
+  "Invoiced Revenues (USD)": 65539,
+  "Not Invoiced Revenues (USD)": 8790,
+  "Collected Revenues (USD)": 42003,
+  "Unpaid Revenues (USD)": 23536,
+  "Cost Basline (USD)": 74861,
+  "Actual Costs (USD)": 70638,
+  "GP Baseline (USD)": 65598,
+  "GP Actual / Cash Flow (USD)": -28635
+}, {
+  "Project Manager": "Lena Müller",
+  "Project Name": "Leadership Development Portal",
+  "Operational Status": "Completed",
+  "Health Status": "Critical",
+  "Start Date": "20-Mar-2023",
+  "End Date": "13-Feb-2024",
+  "Project Duration (Months)": 11,
+  "Currency": "USD",
+  "Contracted Revenues / Currency": 1892670,
+  "Contracted Revenues (USD)": 1892670,
+  "Recognition Value (USD)": 806410,
+  "Invoiced Revenues (USD)": 588447,
+  "Not Invoiced Revenues (USD)": 217963,
+  "Collected Revenues (USD)": 382450,
+  "Unpaid Revenues (USD)": 205997,
+  "Cost Basline (USD)": 1368028,
+  "Actual Costs (USD)": 1137543,
+  "GP Baseline (USD)": 524642,
+  "GP Actual / Cash Flow (USD)": -755093
+}, {
+  "Project Manager": "Omar Khalid",
+  "Project Name": "Healthcare eLearning Hub",
+  "Operational Status": "In Progress",
+  "Health Status": "At Risk",
+  "Start Date": "27-Mar-2023",
+  "End Date": "20-May-2024",
+  "Project Duration (Months)": 14,
+  "Currency": "EGP",
+  "Contracted Revenues / Currency": 1410795,
+  "Contracted Revenues (USD)": 29627,
+  "Recognition Value (USD)": 15269,
+  "Invoiced Revenues (USD)": 8166,
+  "Not Invoiced Revenues (USD)": 7103,
+  "Collected Revenues (USD)": 7060,
+  "Unpaid Revenues (USD)": 1106,
+  "Cost Basline (USD)": 19867,
+  "Actual Costs (USD)": 23723,
+  "GP Baseline (USD)": 9760,
+  "GP Actual / Cash Flow (USD)": -16663
+}, {
+  "Project Manager": "Priya Patel",
+  "Project Name": "Retail Onboarding System",
+  "Operational Status": "Pending",
+  "Health Status": "On Track",
+  "Start Date": "28-Feb-2023",
+  "End Date": "27-Aug-2023",
+  "Project Duration (Months)": 6,
+  "Currency": "AED",
+  "Contracted Revenues / Currency": 997182,
+  "Contracted Revenues (USD)": 271234,
+  "Recognition Value (USD)": 153731,
+  "Invoiced Revenues (USD)": 125728,
+  "Not Invoiced Revenues (USD)": 28003,
+  "Collected Revenues (USD)": 93785,
+  "Unpaid Revenues (USD)": 31943,
+  "Cost Basline (USD)": 143636,
+  "Actual Costs (USD)": 126946,
+  "GP Baseline (USD)": 127598,
+  "GP Actual / Cash Flow (USD)": -33161
+}, {
+  "Project Manager": "David Lee",
+  "Project Name": "STEM Education Initiative",
+  "Operational Status": "In Progress",
+  "Health Status": "Critical",
+  "Start Date": "23-Mar-2023",
+  "End Date": "20-Aug-2023",
+  "Project Duration (Months)": 5,
+  "Currency": "EGP",
+  "Contracted Revenues / Currency": 1477440,
+  "Contracted Revenues (USD)": 31026,
+  "Recognition Value (USD)": 24231,
+  "Invoiced Revenues (USD)": 18587,
+  "Not Invoiced Revenues (USD)": 5644,
+  "Collected Revenues (USD)": 12972,
+  "Unpaid Revenues (USD)": 5615,
+  "Cost Basline (USD)": 17430,
+  "Actual Costs (USD)": 15826,
+  "GP Baseline (USD)": 13596,
+  "GP Actual / Cash Flow (USD)": -2854
+}, {
+  "Project Manager": "Sarah Johnson",
+  "Project Name": "Language Learning App",
+  "Operational Status": "Completed",
+  "Health Status": "At Risk",
+  "Start Date": "23-Jun-2023",
+  "End Date": "18-Apr-2024",
+  "Project Duration (Months)": 10,
+  "Currency": "USD",
+  "Contracted Revenues / Currency": 1635740,
+  "Contracted Revenues (USD)": 1635740,
+  "Recognition Value (USD)": 972561,
+  "Invoiced Revenues (USD)": 859896,
+  "Not Invoiced Revenues (USD)": 112665,
+  "Collected Revenues (USD)": 535178,
+  "Unpaid Revenues (USD)": 324718,
+  "Cost Basline (USD)": 1124785,
+  "Actual Costs (USD)": 1262029,
+  "GP Baseline (USD)": 510955,
+  "GP Actual / Cash Flow (USD)": -726851
+}, {
+  "Project Manager": "Ahmed Hassan",
+  "Project Name": "Compliance Training Module",
+  "Operational Status": "In Progress",
+  "Health Status": "On Track",
+  "Start Date": "09-Apr-2023",
+  "End Date": "06-Sep-2023",
+  "Project Duration (Months)": 5,
+  "Currency": "AED",
+  "Contracted Revenues / Currency": 642463,
+  "Contracted Revenues (USD)": 174750,
+  "Recognition Value (USD)": 165642,
+  "Invoiced Revenues (USD)": 129795,
+  "Not Invoiced Revenues (USD)": 35847,
+  "Collected Revenues (USD)": 115150,
+  "Unpaid Revenues (USD)": 14645,
+  "Cost Basline (USD)": 82905,
+  "Actual Costs (USD)": 82880,
+  "GP Baseline (USD)": 91845,
+  "GP Actual / Cash Flow (USD)": 32270
+}, {
+  "Project Manager": "Maria Garcia",
+  "Project Name": "Sales Enablement Platform",
+  "Operational Status": "Completed",
+  "Health Status": "Critical",
+  "Start Date": "15-Jun-2023",
+  "End Date": "11-Jan-2024",
+  "Project Duration (Months)": 7,
+  "Currency": "SAR",
+  "Contracted Revenues / Currency": 755493,
+  "Contracted Revenues (USD)": 201717,
+  "Recognition Value (USD)": 97586,
+  "Invoiced Revenues (USD)": 85143,
+  "Not Invoiced Revenues (USD)": 12443,
+  "Collected Revenues (USD)": 69442,
+  "Unpaid Revenues (USD)": 15701,
+  "Cost Basline (USD)": 133427,
+  "Actual Costs (USD)": 129607,
+  "GP Baseline (USD)": 68290,
+  "GP Actual / Cash Flow (USD)": -60165
+}, {
+  "Project Manager": "John Smith",
+  "Project Name": "Customer Success Bootcamp",
+  "Operational Status": "In Progress",
+  "Health Status": "At Risk",
+  "Start Date": "13-May-2023",
+  "End Date": "06-Jul-2024",
+  "Project Duration (Months)": 14,
+  "Currency": "USD",
+  "Contracted Revenues / Currency": 659948,
+  "Contracted Revenues (USD)": 659948,
+  "Recognition Value (USD)": 658889,
+  "Invoiced Revenues (USD)": 375017,
+  "Not Invoiced Revenues (USD)": 283872,
+  "Collected Revenues (USD)": 299041,
+  "Unpaid Revenues (USD)": 75976,
+  "Cost Basline (USD)": 438551,
+  "Actual Costs (USD)": 501896,
+  "GP Baseline (USD)": 221397,
+  "GP Actual / Cash Flow (USD)": -202855
+}];
+const parseNum = v => {
+  if (v === null || v === undefined || v === "") return 0;
+  if (typeof v === "number") return v;
+  const s = String(v).replace(/,/g, "").replace(/[^\d.\-]/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+};
+const parseDate = s => {
+  if (!s) return null;
+  if (s instanceof Date) return s;
+  const str = String(s).trim();
+  const m = str.match(/^(\d{1,2})[-\/\s]([A-Za-z]{3,})[-\/\s](\d{4})$/);
+  if (m) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months.findIndex(mo => mo.toLowerCase() === m[2].toLowerCase().slice(0, 3));
+    if (month >= 0) return new Date(parseInt(m[3]), month, parseInt(m[1]));
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+};
+const fmtMoney = n => {
+  if (n === null || n === undefined || isNaN(n)) return "$0";
+  const neg = n < 0;
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 1_000_000) s = "$" + (abs / 1_000_000).toFixed(2) + "M";else if (abs >= 1_000) s = "$" + (abs / 1_000).toFixed(1) + "K";else s = "$" + Math.round(abs).toLocaleString();
+  return neg ? "-" + s : s;
+};
+const fmtMoneyFull = n => {
+  if (n === null || n === undefined || isNaN(n)) return "$0";
+  const neg = n < 0;
+  const abs = Math.abs(n);
+  return (neg ? "-" : "") + "$" + Math.round(abs).toLocaleString();
+};
+const fmtDate = d => {
+  if (!d) return "—";
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+};
+const NUM_FIELDS = ["Project Duration (Months)", "Contracted Revenues / Currency", "Contracted Revenues (USD)", "Recognition Value (USD)", "Invoiced Revenues (USD)", "Not Invoiced Revenues (USD)", "Collected Revenues (USD)", "Unpaid Revenues (USD)", "Cost Basline (USD)", "Actual Costs (USD)", "GP Baseline (USD)", "GP Actual / Cash Flow (USD)"];
+const normalizeRow = row => {
+  const out = {
+    ...row
+  };
+  NUM_FIELDS.forEach(f => {
+    out[f] = parseNum(row[f]);
+  });
+  out._startDate = parseDate(row["Start Date"]);
+  out._endDate = parseDate(row["End Date"]);
+  out._gpMarginBaselinePct = out["Contracted Revenues (USD)"] > 0 ? out["GP Baseline (USD)"] / out["Contracted Revenues (USD)"] * 100 : 0;
+  out._gpMarginActualPct = out["Recognition Value (USD)"] > 0 ? out["GP Actual / Cash Flow (USD)"] / out["Recognition Value (USD)"] * 100 : 0;
+  out._costOverrunPct = out["Cost Basline (USD)"] > 0 ? (out["Actual Costs (USD)"] - out["Cost Basline (USD)"]) / out["Cost Basline (USD)"] * 100 : 0;
+  out._collectionRate = out["Invoiced Revenues (USD)"] > 0 ? out["Collected Revenues (USD)"] / out["Invoiced Revenues (USD)"] * 100 : 0;
+  return out;
+};
+const downloadCSV = (rows, filename) => {
+  if (!rows.length) return;
+  const cols = ["Project Manager", "Project Name", "Operational Status", "Health Status", "Start Date", "End Date", "Project Duration (Months)", "Currency", "Contracted Revenues / Currency", "Contracted Revenues (USD)", "Recognition Value (USD)", "Invoiced Revenues (USD)", "Not Invoiced Revenues (USD)", "Collected Revenues (USD)", "Unpaid Revenues (USD)", "Cost Basline (USD)", "Actual Costs (USD)", "GP Baseline (USD)", "GP Actual / Cash Flow (USD)"];
+  const escape = v => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const csv = [cols.join(",")].concat(rows.map(r => cols.map(c => escape(r[c])).join(","))).join("\n");
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+const {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+  ReferenceLine,
+  LabelList,
+  ZAxis
+} = Recharts;
+const BRAND_RED = "#ED1C24";
+const BRAND_TEAL = "#0B7A9E";
+const BRAND_BLACK = "#0A0A0A";
+const COLOR_GOOD = "#0F7A4D";
+const COLOR_WARN = "#B8711A";
+const COLOR_BAD = BRAND_RED;
+const COLOR_ONTRACK = COLOR_GOOD;
+const COLOR_ATRISK = COLOR_WARN;
+const COLOR_CRITICAL = COLOR_BAD;
+const useTheme = () => {
+  const [theme, setTheme] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem("almentor-theme");
+      if (saved === "dark" || saved === "light") return saved;
+    } catch (e) {}
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("almentor-theme", theme);
+    } catch (e) {}
+  }, [theme]);
+  return [theme, () => setTheme(t => t === "dark" ? "light" : "dark")];
+};
+const useDashboardData = () => {
+  const [state, setState] = React.useState({
+    rows: [],
+    loading: true,
+    source: "loading",
+    error: null,
+    lastUpdated: null
+  });
+  const loadSnapshot = React.useCallback(() => {
+    setState({
+      rows: FALLBACK_DATA.map(normalizeRow),
+      loading: false,
+      source: "snapshot",
+      error: null,
+      lastUpdated: new Date()
+    });
+  }, []);
+  const loadLive = React.useCallback(async () => {
+    if (!SHEET_CSV_URL || SHEET_CSV_URL.indexOf("__SHEET") === 0) return loadSnapshot();
+    try {
+      const response = await fetch(SHEET_CSV_URL, {
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const text = await response.text();
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false
+      });
+      const rows = (parsed.data || []).filter(r => r["Project Name"] && String(r["Project Name"]).trim().length > 0).map(normalizeRow);
+      if (rows.length === 0) throw new Error("No rows returned from sheet");
+      setState({
+        rows,
+        loading: false,
+        source: "live",
         error: null,
-        lastUpdated: null
+        lastUpdated: new Date()
       });
-
-      const loadSnapshot = React.useCallback(() => {
-        const rows = FALLBACK_DATA.map(normalizeRow);
-        setState({
-          rows,
-          loading: false,
-          source: "snapshot",
-          error: null,
-          lastUpdated: new Date()
-        });
-      }, []);
-
-      const loadLive = React.useCallback(async () => {
-        if (!SHEET_CSV_URL) return loadSnapshot();
-        try {
-          const response = await fetch(SHEET_CSV_URL);
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          const text = await response.text();
-          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: false });
-          const rows = (parsed.data || [])
-            .filter(r => r["Project Name"] && String(r["Project Name"]).trim().length > 0)
-            .map(normalizeRow);
-          if (rows.length === 0) throw new Error("No rows returned from sheet");
-          setState({
-            rows,
-            loading: false,
-            source: "live",
-            error: null,
-            lastUpdated: new Date()
-          });
-        } catch (err) {
-          console.warn("Live fetch failed, using snapshot:", err);
-          const rows = FALLBACK_DATA.map(normalizeRow);
-          setState({
-            rows,
-            loading: false,
-            source: "error",
-            error: err.message,
-            lastUpdated: new Date()
-          });
-        }
-      }, [loadSnapshot]);
-
-      React.useEffect(() => {
-        loadLive();
-        if (SHEET_CSV_URL) {
-          const interval = setInterval(loadLive, REFRESH_INTERVAL_MS);
-          return () => clearInterval(interval);
-        }
-      }, [loadLive]);
-
-      return { ...state, refresh: loadLive };
-    };
-
-    // ============================================================
-    // Components
-    // ============================================================
-
-    const TopBar = ({ source, lastUpdated, onRefresh }) => {
-      const label = source === "live" ? "Live" : source === "snapshot" ? "Snapshot" : "Offline";
-      return (
-        <div className="topbar">
-          <div className="brand">
-            <div className="brand-logo">almentor</div>
-            <div className="brand-divider"></div>
-            <div className="brand-sub">Project Portfolio Intelligence</div>
-          </div>
-          <div className="topbar-meta">
-            <span className={"live-dot " + (source === "snapshot" ? "snapshot" : source === "error" ? "error" : "")}>
-              <span className="dot"></span>
-              {label}
-              {lastUpdated && <span style={{opacity: 0.7, marginLeft: 4}}>· {lastUpdated.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"})}</span>}
-            </span>
-            <span style={{cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3}} onClick={onRefresh}>
-              Refresh
-            </span>
-          </div>
-        </div>
-      );
-    };
-
-    // Filters
-    const Filters = ({ rows, filters, setFilters, filteredCount }) => {
-      const uniquePMs = Array.from(new Set(rows.map(r => r["Project Manager"]))).filter(Boolean).sort();
-      const uniqueOpStatus = Array.from(new Set(rows.map(r => r["Operational Status"]))).filter(Boolean);
-      const uniqueHealth = Array.from(new Set(rows.map(r => r["Health Status"]))).filter(Boolean);
-      const uniqueCurrencies = Array.from(new Set(rows.map(r => r["Currency"]))).filter(Boolean);
-
-      const toggle = (key, value) => {
-        const current = filters[key] || [];
-        setFilters({
-          ...filters,
-          [key]: current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-        });
-      };
-
-      const reset = () => setFilters({ pms: [], ops: [], health: [], currency: [], search: "" });
-
-      return (
-        <div className="filters">
-          <div className="filter-group" style={{gridColumn: "span 2"}}>
-            <label>Project Manager</label>
-            <div className="chip-group">
-              {uniquePMs.map(pm => (
-                <span
-                  key={pm}
-                  className={"chip " + ((filters.pms || []).includes(pm) ? "active" : "")}
-                  onClick={() => toggle("pms", pm)}
-                >{pm}</span>
-              ))}
-            </div>
-          </div>
-          <div className="filter-group">
-            <label>Operational Status</label>
-            <div className="chip-group">
-              {uniqueOpStatus.map(s => (
-                <span
-                  key={s}
-                  className={"chip " + ((filters.ops || []).includes(s) ? "active" : "")}
-                  onClick={() => toggle("ops", s)}
-                >{s}</span>
-              ))}
-            </div>
-          </div>
-          <div className="filter-group">
-            <label>Health Status</label>
-            <div className="chip-group">
-              {uniqueHealth.map(h => (
-                <span
-                  key={h}
-                  className={"chip " + ((filters.health || []).includes(h) ? "active" : "")}
-                  onClick={() => toggle("health", h)}
-                >{h}</span>
-              ))}
-            </div>
-          </div>
-          <div className="filter-group">
-            <label>Currency</label>
-            <div className="chip-group">
-              {uniqueCurrencies.map(c => (
-                <span
-                  key={c}
-                  className={"chip " + ((filters.currency || []).includes(c) ? "active" : "")}
-                  onClick={() => toggle("currency", c)}
-                >{c}</span>
-              ))}
-            </div>
-          </div>
-          <div className="filter-group">
-            <label>Search Project</label>
-            <input
-              type="text"
-              placeholder="Type a project name…"
-              value={filters.search || ""}
-              onChange={e => setFilters({ ...filters, search: e.target.value })}
-            />
-            <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, gap: 8}}>
-              <span className="filter-count"><strong>{filteredCount}</strong> / {rows.length} projects</span>
-              <button className="filter-reset" onClick={reset}>Reset</button>
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    // KPI Card
-    const Kpi = ({ label, value, sub, color = "red", valueClass = "" }) => (
-      <div className={"kpi kpi-" + color}>
-        <div className="kpi-accent"></div>
-        <div className="kpi-label">{label}</div>
-        <div className={"kpi-value " + valueClass}>{value}</div>
-        {sub && <div className="kpi-sub">{sub}</div>}
-      </div>
-    );
-
-    // KPI Strip
-    const KpiStrip = ({ rows }) => {
-      const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
-      const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
-      const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
-      const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
-      const actualCost = rows.reduce((s, r) => s + r["Actual Costs (USD)"], 0);
-      const gpActual = rows.reduce((s, r) => s + r["GP Actual / Cash Flow (USD)"], 0);
-      const recognition = rows.reduce((s, r) => s + r["Recognition Value (USD)"], 0);
-      const portfolioMargin = recognition > 0 ? (gpActual / recognition) * 100 : 0;
-      const atRisk = rows.filter(r => ["At Risk","Critical"].includes(r["Health Status"])).length;
-      const atRiskPct = rows.length > 0 ? (atRisk / rows.length) * 100 : 0;
-
-      return (
-        <div className="kpi-strip">
-          <Kpi
-            label="Contracted Revenue"
-            value={fmtMoney(contracted)}
-            sub={<span>{rows.length} active projects</span>}
-            color="black"
-          />
-          <Kpi
-            label="Collected To Date"
-            value={fmtMoney(collected)}
-            sub={<span>{contracted > 0 ? ((collected/contracted)*100).toFixed(1) : 0}% of contracted</span>}
-            color="teal"
-          />
-          <Kpi
-            label="Outstanding (Unpaid)"
-            value={fmtMoney(unpaid)}
-            sub={<span>Invoiced but not collected</span>}
-            color="warn"
-            valueClass={unpaid > 0 ? "negative" : ""}
-          />
-          <Kpi
-            label="Actual Cost"
-            value={fmtMoney(actualCost)}
-            sub={<span>Delivery spend to date</span>}
-            color="gray"
-          />
-          <Kpi
-            label="Portfolio GP (Cash Flow)"
-            value={fmtMoney(gpActual)}
-            sub={<span>Margin: {portfolioMargin.toFixed(1)}%</span>}
-            color={gpActual >= 0 ? "green" : "red"}
-            valueClass={gpActual >= 0 ? "positive" : "negative"}
-          />
-          <Kpi
-            label="Projects At Risk"
-            value={atRisk + " / " + rows.length}
-            sub={<span>{atRiskPct.toFixed(0)}% of portfolio</span>}
-            color="red"
-            valueClass={atRiskPct > 50 ? "negative" : ""}
-          />
-        </div>
-      );
-    };
-
-    // Auto-generated Insights
-    const InsightsPanel = ({ rows }) => {
-      if (rows.length === 0) return null;
-
-      const negativeProjects = rows.filter(r => r["GP Actual / Cash Flow (USD)"] < 0);
-      const negPct = (negativeProjects.length / rows.length) * 100;
-
-      const lossSorted = [...rows].sort((a,b) => a["GP Actual / Cash Flow (USD)"] - b["GP Actual / Cash Flow (USD)"]);
-      const topLosers = lossSorted.slice(0, 3).filter(r => r["GP Actual / Cash Flow (USD)"] < 0);
-      const top3Losses = topLosers.reduce((s, r) => s + r["GP Actual / Cash Flow (USD)"], 0);
-
-      const bestPerformer = [...rows].sort((a,b) => b["GP Actual / Cash Flow (USD)"] - a["GP Actual / Cash Flow (USD)"])[0];
-
-      const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
-      const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
-      const collectionRate = invoiced > 0 ? (collected/invoiced)*100 : 0;
-      const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
-
-      const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
-      const atRiskExposure = rows
-        .filter(r => ["At Risk","Critical"].includes(r["Health Status"]))
-        .reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
-      const atRiskPct = contracted > 0 ? (atRiskExposure/contracted)*100 : 0;
-
-      const overruns = rows
-        .filter(r => r["Cost Basline (USD)"] > 0 && r._costOverrunPct > 0)
-        .sort((a,b) => b._costOverrunPct - a._costOverrunPct);
-      const worstOverrun = overruns[0];
-
-      const currencyExp = {};
-      rows.forEach(r => {
-        currencyExp[r.Currency] = (currencyExp[r.Currency] || 0) + r["Contracted Revenues (USD)"];
+    } catch (err) {
+      console.warn("Live fetch failed, using snapshot:", err);
+      setState({
+        rows: FALLBACK_DATA.map(normalizeRow),
+        loading: false,
+        source: "error",
+        error: err.message,
+        lastUpdated: new Date()
       });
-      const topCurrency = Object.entries(currencyExp).sort((a,b) => b[1]-a[1])[0];
-      const topCurrencyPct = contracted > 0 ? (topCurrency[1]/contracted)*100 : 0;
-
-      const insights = [
-        {
-          icon: "⚠️",
-          text: (
-            <>
-              <strong>{negativeProjects.length} of {rows.length} projects</strong> ({negPct.toFixed(0)}%) are running at a <strong>negative cash flow</strong>. The portfolio's margin reality is diverging sharply from baseline.
-            </>
-          )
-        },
-        {
-          icon: "🔻",
-          text: topLosers.length > 0 ? (
-            <>
-              Top loss-makers: <strong>{topLosers.map(r => r["Project Name"]).join(", ")}</strong> — combined loss of <span className="num">{fmtMoney(top3Losses)}</span>. Immediate review warranted.
-            </>
-          ) : <>No major loss-making projects in the current selection.</>
-        },
-        {
-          icon: "💰",
-          text: (
-            <>
-              Collection rate is <strong className="num">{collectionRate.toFixed(1)}%</strong> with <span className="num">{fmtMoney(unpaid)}</span> outstanding. Finance should prioritize AR follow-up on the largest unpaid balances.
-            </>
-          )
-        },
-        {
-          icon: bestPerformer["GP Actual / Cash Flow (USD)"] >= 0 ? "✅" : "🎯",
-          text: bestPerformer["GP Actual / Cash Flow (USD)"] >= 0 ? (
-            <>
-              Best performer: <strong>{bestPerformer["Project Name"]}</strong> ({bestPerformer["Project Manager"]}) at <span className="num">{fmtMoney(bestPerformer["GP Actual / Cash Flow (USD)"])}</span>. A potential playbook for the rest of the portfolio.
-            </>
-          ) : (
-            <>
-              No profitable projects in current view. Least unprofitable: <strong>{bestPerformer["Project Name"]}</strong> at <span className="num">{fmtMoney(bestPerformer["GP Actual / Cash Flow (USD)"])}</span>.
-            </>
-          )
-        }
-      ];
-
-      if (worstOverrun) {
-        insights.push({
-          icon: "📊",
-          text: (
-            <>
-              <strong>{worstOverrun["Project Name"]}</strong> has the largest cost overrun at <strong className="num">{worstOverrun._costOverrunPct.toFixed(1)}%</strong> above baseline ({fmtMoney(worstOverrun["Actual Costs (USD)"] - worstOverrun["Cost Basline (USD)"])} over).
-            </>
-          )
-        });
+    }
+  }, [loadSnapshot]);
+  React.useEffect(() => {
+    loadLive();
+    if (SHEET_CSV_URL && SHEET_CSV_URL.indexOf("__SHEET") !== 0) {
+      const interval = setInterval(loadLive, REFRESH_INTERVAL_MS);
+      return () => clearInterval(interval);
+    }
+  }, [loadLive]);
+  return {
+    ...state,
+    refresh: loadLive
+  };
+};
+const TopBar = ({
+  source,
+  lastUpdated,
+  onRefresh,
+  theme,
+  toggleTheme,
+  onExportCSV,
+  refreshing
+}) => {
+  const label = source === "live" ? "Live" : source === "snapshot" ? "Snapshot" : source === "error" ? "Offline" : "Loading";
+  const dotClass = source === "live" ? "" : source === "snapshot" ? "snapshot" : source === "error" ? "error" : "snapshot";
+  return React.createElement("header", {
+    className: "topbar",
+    role: "banner"
+  }, React.createElement("a", {
+    href: "#main",
+    className: "skip-link"
+  }, "Skip to dashboard"), React.createElement("div", {
+    className: "brand"
+  }, React.createElement("div", {
+    className: "brand-logo",
+    "aria-label": "almentor"
+  }, "almentor"), React.createElement("div", {
+    className: "brand-divider",
+    "aria-hidden": "true"
+  }), React.createElement("div", {
+    className: "brand-sub"
+  }, "Project Portfolio Intelligence")), React.createElement("div", {
+    className: "topbar-meta",
+    role: "status",
+    "aria-live": "polite"
+  }, React.createElement("span", {
+    className: "live-dot " + dotClass,
+    "aria-label": "Data source: " + label
+  }, React.createElement("span", {
+    className: "dot",
+    "aria-hidden": "true"
+  }), label, lastUpdated && React.createElement("span", {
+    style: {
+      opacity: 0.7,
+      marginLeft: 4
+    }
+  }, "\xB7 ", lastUpdated.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit"
+  }))), React.createElement("button", {
+    type: "button",
+    className: "topbar-btn",
+    onClick: onRefresh,
+    disabled: refreshing,
+    "aria-label": "Refresh data"
+  }, refreshing ? "Refreshing…" : "Refresh"), React.createElement("button", {
+    type: "button",
+    className: "topbar-btn",
+    onClick: onExportCSV,
+    "aria-label": "Export current view as CSV"
+  }, "Export CSV"), React.createElement("button", {
+    type: "button",
+    className: "topbar-btn theme-toggle",
+    onClick: toggleTheme,
+    "aria-label": "Switch to " + (theme === "dark" ? "light" : "dark") + " mode",
+    title: "Switch to " + (theme === "dark" ? "light" : "dark") + " mode"
+  }, theme === "dark" ? "Light" : "Dark")));
+};
+const Chip = ({
+  label,
+  active,
+  onToggle
+}) => React.createElement("button", {
+  type: "button",
+  className: "chip " + (active ? "active" : ""),
+  "aria-pressed": active,
+  onClick: onToggle
+}, label);
+const Filters = ({
+  rows,
+  filters,
+  setFilters,
+  filteredCount
+}) => {
+  const uniquePMs = Array.from(new Set(rows.map(r => r["Project Manager"]))).filter(Boolean).sort();
+  const uniqueOpStatus = Array.from(new Set(rows.map(r => r["Operational Status"]))).filter(Boolean);
+  const uniqueHealth = ["On Track", "At Risk", "Critical"].filter(h => rows.some(r => r["Health Status"] === h));
+  const uniqueCurrencies = Array.from(new Set(rows.map(r => r["Currency"]))).filter(Boolean);
+  const toggle = (key, value) => {
+    const current = filters[key] || [];
+    setFilters({
+      ...filters,
+      [key]: current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    });
+  };
+  const reset = () => setFilters({
+    pms: [],
+    ops: [],
+    health: [],
+    currency: [],
+    search: "",
+    dateFrom: "",
+    dateTo: ""
+  });
+  return React.createElement("section", {
+    className: "filters",
+    "aria-label": "Filter projects"
+  }, React.createElement("div", {
+    className: "filter-group",
+    style: {
+      gridColumn: "span 2"
+    }
+  }, React.createElement("label", {
+    id: "lbl-pm"
+  }, "Project Manager"), React.createElement("div", {
+    className: "chip-group",
+    role: "group",
+    "aria-labelledby": "lbl-pm"
+  }, uniquePMs.map(pm => React.createElement(Chip, {
+    key: pm,
+    label: pm,
+    active: (filters.pms || []).includes(pm),
+    onToggle: () => toggle("pms", pm)
+  })))), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    id: "lbl-ops"
+  }, "Operational Status"), React.createElement("div", {
+    className: "chip-group",
+    role: "group",
+    "aria-labelledby": "lbl-ops"
+  }, uniqueOpStatus.map(s => React.createElement(Chip, {
+    key: s,
+    label: s,
+    active: (filters.ops || []).includes(s),
+    onToggle: () => toggle("ops", s)
+  })))), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    id: "lbl-health"
+  }, "Health Status"), React.createElement("div", {
+    className: "chip-group",
+    role: "group",
+    "aria-labelledby": "lbl-health"
+  }, uniqueHealth.map(h => React.createElement(Chip, {
+    key: h,
+    label: h,
+    active: (filters.health || []).includes(h),
+    onToggle: () => toggle("health", h)
+  })))), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    id: "lbl-ccy"
+  }, "Currency"), React.createElement("div", {
+    className: "chip-group",
+    role: "group",
+    "aria-labelledby": "lbl-ccy"
+  }, uniqueCurrencies.map(c => React.createElement(Chip, {
+    key: c,
+    label: c,
+    active: (filters.currency || []).includes(c),
+    onToggle: () => toggle("currency", c)
+  })))), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    htmlFor: "filter-search"
+  }, "Search Project"), React.createElement("input", {
+    id: "filter-search",
+    type: "search",
+    placeholder: "Type a project name\u2026",
+    value: filters.search || "",
+    onChange: e => setFilters({
+      ...filters,
+      search: e.target.value
+    })
+  })), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    htmlFor: "filter-date-from"
+  }, "Start After"), React.createElement("input", {
+    id: "filter-date-from",
+    type: "date",
+    value: filters.dateFrom || "",
+    onChange: e => setFilters({
+      ...filters,
+      dateFrom: e.target.value
+    })
+  })), React.createElement("div", {
+    className: "filter-group"
+  }, React.createElement("label", {
+    htmlFor: "filter-date-to"
+  }, "End Before"), React.createElement("input", {
+    id: "filter-date-to",
+    type: "date",
+    value: filters.dateTo || "",
+    onChange: e => setFilters({
+      ...filters,
+      dateTo: e.target.value
+    })
+  })), React.createElement("div", {
+    className: "filter-group filter-actions"
+  }, React.createElement("span", {
+    className: "filter-count"
+  }, React.createElement("strong", null, filteredCount), " / ", rows.length, " projects"), React.createElement("button", {
+    type: "button",
+    className: "filter-reset",
+    onClick: reset,
+    "aria-label": "Reset all filters"
+  }, "Reset")));
+};
+const Kpi = ({
+  label,
+  value,
+  sub,
+  color = "red",
+  valueClass = "",
+  delta
+}) => React.createElement("div", {
+  className: "kpi kpi-" + color
+}, React.createElement("div", {
+  className: "kpi-accent",
+  "aria-hidden": "true"
+}), React.createElement("div", {
+  className: "kpi-label"
+}, label), React.createElement("div", {
+  className: "kpi-value " + valueClass
+}, value), sub && React.createElement("div", {
+  className: "kpi-sub"
+}, sub), delta !== undefined && delta !== null && !isNaN(delta) && React.createElement("div", {
+  className: "kpi-delta " + (delta >= 0 ? "positive" : "negative"),
+  "aria-label": "Change: " + (delta >= 0 ? "+" : "") + delta.toFixed(1) + "%"
+}, delta >= 0 ? "▲" : "▼", " ", Math.abs(delta).toFixed(1), "%"));
+const KpiStrip = ({
+  rows
+}) => {
+  const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
+  const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
+  const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
+  const actualCost = rows.reduce((s, r) => s + r["Actual Costs (USD)"], 0);
+  const baselineCost = rows.reduce((s, r) => s + r["Cost Basline (USD)"], 0);
+  const gpActual = rows.reduce((s, r) => s + r["GP Actual / Cash Flow (USD)"], 0);
+  const gpBaseline = rows.reduce((s, r) => s + r["GP Baseline (USD)"], 0);
+  const recognition = rows.reduce((s, r) => s + r["Recognition Value (USD)"], 0);
+  const portfolioMargin = recognition > 0 ? gpActual / recognition * 100 : 0;
+  const baselineMargin = contracted > 0 ? gpBaseline / contracted * 100 : 0;
+  const atRisk = rows.filter(r => ["At Risk", "Critical"].includes(r["Health Status"])).length;
+  const atRiskPct = rows.length > 0 ? atRisk / rows.length * 100 : 0;
+  const costDeltaPct = baselineCost > 0 ? (actualCost - baselineCost) / baselineCost * 100 : 0;
+  const gpDeltaPct = gpBaseline !== 0 ? (gpActual - gpBaseline) / Math.abs(gpBaseline) * 100 : null;
+  return React.createElement("section", {
+    className: "kpi-strip",
+    "aria-label": "Key portfolio metrics"
+  }, React.createElement(Kpi, {
+    label: "Contracted Revenue",
+    value: fmtMoney(contracted),
+    sub: rows.length + " active projects",
+    color: "black"
+  }), React.createElement(Kpi, {
+    label: "Collected To Date",
+    value: fmtMoney(collected),
+    sub: (contracted > 0 ? (collected / contracted * 100).toFixed(1) : 0) + "% of contracted",
+    color: "teal"
+  }), React.createElement(Kpi, {
+    label: "Outstanding (Unpaid)",
+    value: fmtMoney(unpaid),
+    sub: "Invoiced but not collected",
+    color: "warn",
+    valueClass: unpaid > 0 ? "negative" : ""
+  }), React.createElement(Kpi, {
+    label: "Actual Cost",
+    value: fmtMoney(actualCost),
+    sub: "Baseline: " + fmtMoney(baselineCost),
+    color: "gray",
+    delta: -costDeltaPct
+  }), React.createElement(Kpi, {
+    label: "Portfolio GP",
+    value: fmtMoney(gpActual),
+    sub: "Margin: " + portfolioMargin.toFixed(1) + "% (vs " + baselineMargin.toFixed(1) + "% baseline)",
+    color: gpActual >= 0 ? "green" : "red",
+    valueClass: gpActual >= 0 ? "positive" : "negative",
+    delta: gpDeltaPct
+  }), React.createElement(Kpi, {
+    label: "Projects At Risk",
+    value: atRisk + " / " + rows.length,
+    sub: atRiskPct.toFixed(0) + "% of portfolio",
+    color: "red",
+    valueClass: atRiskPct > 50 ? "negative" : ""
+  }));
+};
+const InsightsPanel = ({
+  rows
+}) => {
+  if (rows.length === 0) return null;
+  const negativeProjects = rows.filter(r => r["GP Actual / Cash Flow (USD)"] < 0);
+  const negPct = negativeProjects.length / rows.length * 100;
+  const lossSorted = [...rows].sort((a, b) => a["GP Actual / Cash Flow (USD)"] - b["GP Actual / Cash Flow (USD)"]);
+  const topLosers = lossSorted.slice(0, 3).filter(r => r["GP Actual / Cash Flow (USD)"] < 0);
+  const top3Losses = topLosers.reduce((s, r) => s + r["GP Actual / Cash Flow (USD)"], 0);
+  const bestPerformer = [...rows].sort((a, b) => b["GP Actual / Cash Flow (USD)"] - a["GP Actual / Cash Flow (USD)"])[0];
+  const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
+  const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
+  const collectionRate = invoiced > 0 ? collected / invoiced * 100 : 0;
+  const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
+  const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
+  const atRiskExposure = rows.filter(r => ["At Risk", "Critical"].includes(r["Health Status"])).reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
+  const atRiskPct = contracted > 0 ? atRiskExposure / contracted * 100 : 0;
+  const overruns = rows.filter(r => r["Cost Basline (USD)"] > 0 && r._costOverrunPct > 0).sort((a, b) => b._costOverrunPct - a._costOverrunPct);
+  const worstOverrun = overruns[0];
+  const currencyExp = {};
+  rows.forEach(r => {
+    currencyExp[r.Currency] = (currencyExp[r.Currency] || 0) + r["Contracted Revenues (USD)"];
+  });
+  const topCurrency = Object.entries(currencyExp).sort((a, b) => b[1] - a[1])[0];
+  const topCurrencyPct = contracted > 0 ? topCurrency[1] / contracted * 100 : 0;
+  const insights = [{
+    icon: "⚠",
+    text: React.createElement(React.Fragment, null, React.createElement("strong", null, negativeProjects.length, " of ", rows.length, " projects"), " (", negPct.toFixed(0), "%) are running at a ", React.createElement("strong", null, "negative cash flow"), ". The portfolio's margin reality is diverging from baseline.")
+  }, {
+    icon: "▼",
+    text: topLosers.length > 0 ? React.createElement(React.Fragment, null, "Top loss-makers: ", React.createElement("strong", null, topLosers.map(r => r["Project Name"]).join(", ")), " \u2014 combined loss of ", React.createElement("span", {
+      className: "num"
+    }, fmtMoney(top3Losses)), ".") : React.createElement(React.Fragment, null, "No major loss-making projects in the current selection.")
+  }, {
+    icon: "$",
+    text: React.createElement(React.Fragment, null, "Collection rate is ", React.createElement("strong", {
+      className: "num"
+    }, collectionRate.toFixed(1), "%"), " with ", React.createElement("span", {
+      className: "num"
+    }, fmtMoney(unpaid)), " outstanding. Finance should prioritize AR follow-up.")
+  }, {
+    icon: bestPerformer["GP Actual / Cash Flow (USD)"] >= 0 ? "✓" : "○",
+    text: bestPerformer["GP Actual / Cash Flow (USD)"] >= 0 ? React.createElement(React.Fragment, null, "Best performer: ", React.createElement("strong", null, bestPerformer["Project Name"]), " (", bestPerformer["Project Manager"], ") at ", React.createElement("span", {
+      className: "num"
+    }, fmtMoney(bestPerformer["GP Actual / Cash Flow (USD)"])), ".") : React.createElement(React.Fragment, null, "No profitable projects in current view. Least unprofitable: ", React.createElement("strong", null, bestPerformer["Project Name"]), " at ", React.createElement("span", {
+      className: "num"
+    }, fmtMoney(bestPerformer["GP Actual / Cash Flow (USD)"])), ".")
+  }];
+  if (worstOverrun) insights.push({
+    icon: "▲",
+    text: React.createElement(React.Fragment, null, React.createElement("strong", null, worstOverrun["Project Name"]), " has the largest cost overrun at ", React.createElement("strong", {
+      className: "num"
+    }, worstOverrun._costOverrunPct.toFixed(1), "%"), " over baseline.")
+  });
+  insights.push({
+    icon: "◉",
+    text: React.createElement(React.Fragment, null, "Currency concentration: ", React.createElement("strong", {
+      className: "num"
+    }, topCurrencyPct.toFixed(0), "%"), " of contracted value is in ", React.createElement("strong", null, topCurrency[0]), ". Consider FX hedging.")
+  });
+  insights.push({
+    icon: "!",
+    text: React.createElement(React.Fragment, null, "At-risk exposure: ", React.createElement("strong", {
+      className: "num"
+    }, fmtMoney(atRiskExposure)), " (", atRiskPct.toFixed(0), "% of contracted revenue) sits in At Risk / Critical projects.")
+  });
+  return React.createElement("section", {
+    className: "insights",
+    "aria-label": "Auto-generated insights"
+  }, React.createElement("div", {
+    className: "insights-header"
+  }, React.createElement("h2", null, "Auto-Generated Insights"), React.createElement("span", {
+    className: "badge"
+  }, "LIVE")), React.createElement("div", {
+    className: "insights-grid"
+  }, insights.slice(0, 4).map((ins, i) => React.createElement("div", {
+    key: i,
+    className: "insight"
+  }, React.createElement("span", {
+    className: "icon",
+    "aria-hidden": "true"
+  }, ins.icon), React.createElement("div", {
+    className: "body"
+  }, ins.text)))));
+};
+const EmptyState = ({
+  message
+}) => React.createElement("div", {
+  className: "empty-state"
+}, message || "No data matches the current filter.");
+const RevenueWaterfall = ({
+  rows
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
+  const recognized = rows.reduce((s, r) => s + r["Recognition Value (USD)"], 0);
+  const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
+  const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
+  const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
+  const data = [{
+    name: "Contracted",
+    value: contracted,
+    color: BRAND_BLACK
+  }, {
+    name: "Recognized",
+    value: recognized,
+    color: BRAND_TEAL
+  }, {
+    name: "Invoiced",
+    value: invoiced,
+    color: "#3B9DBD"
+  }, {
+    name: "Collected",
+    value: collected,
+    color: COLOR_GOOD
+  }, {
+    name: "Outstanding",
+    value: unpaid,
+    color: BRAND_RED
+  }];
+  const pct = v => contracted > 0 ? (v / contracted * 100).toFixed(0) : 0;
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.name), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Amount"), React.createElement("span", null, fmtMoneyFull(p.value))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "% of contracted"), React.createElement("span", null, pct(p.value), "%")));
+  };
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Revenue leakage waterfall chart"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 220
+  }, React.createElement(BarChart, {
+    data: data,
+    margin: {
+      top: 10,
+      right: 10,
+      left: 0,
+      bottom: 5
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)",
+    vertical: false
+  }), React.createElement(XAxis, {
+    dataKey: "name",
+    tickLine: false,
+    axisLine: {
+      stroke: "var(--border-strong)"
+    }
+  }), React.createElement(YAxis, {
+    tickFormatter: fmtMoney,
+    tickLine: false,
+    axisLine: false
+  }), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null),
+    cursor: {
+      fill: "rgba(237, 28, 36, 0.08)"
+    }
+  }), React.createElement(Bar, {
+    dataKey: "value",
+    radius: [4, 4, 0, 0]
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: d.color
+  }))))), React.createElement("div", {
+    className: "waterfall-labels"
+  }, data.map(d => React.createElement("div", {
+    key: d.name,
+    className: "waterfall-step"
+  }, React.createElement("div", {
+    className: "step-name"
+  }, d.name), React.createElement("div", {
+    className: "step-value"
+  }, fmtMoney(d.value)), React.createElement("div", {
+    className: "step-pct"
+  }, pct(d.value), "%")))));
+};
+const HealthDonut = ({
+  rows,
+  onSliceClick
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const counts = {
+    "On Track": 0,
+    "At Risk": 0,
+    "Critical": 0
+  };
+  rows.forEach(r => {
+    counts[r["Health Status"]] = (counts[r["Health Status"]] || 0) + 1;
+  });
+  const data = [{
+    name: "On Track",
+    value: counts["On Track"],
+    color: COLOR_ONTRACK
+  }, {
+    name: "At Risk",
+    value: counts["At Risk"],
+    color: COLOR_ATRISK
+  }, {
+    name: "Critical",
+    value: counts["Critical"],
+    color: COLOR_CRITICAL
+  }].filter(d => d.value > 0);
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.name), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Projects"), React.createElement("span", null, p.value)), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Share"), React.createElement("span", null, (p.value / total * 100).toFixed(0), "%")), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label",
+      style: {
+        fontStyle: "italic"
       }
-
-      insights.push({
-        icon: "🌍",
-        text: (
-          <>
-            Currency concentration: <strong className="num">{topCurrencyPct.toFixed(0)}%</strong> of contracted value is in <strong>{topCurrency[0]}</strong>. Consider FX hedging strategy.
-          </>
-        )
-      });
-
-      insights.push({
-        icon: "🚨",
-        text: (
-          <>
-            At-risk exposure: <strong className="num">{fmtMoney(atRiskExposure)}</strong> ({atRiskPct.toFixed(0)}% of contracted revenue) sits in At Risk / Critical projects.
-          </>
-        )
-      });
-
-      // Show first 4 (fits grid)
-      const displayed = insights.slice(0, 4);
-
-      return (
-        <div className="insights">
-          <div className="insights-header">
-            <h3>Auto-Generated Insights</h3>
-            <span className="badge">LIVE</span>
-          </div>
-          <div className="insights-grid">
-            {displayed.map((ins, i) => (
-              <div key={i} className="insight">
-                <span className="icon">{ins.icon}</span>
-                <div className="body">{ins.text}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
-
-    // Chart: Revenue Leakage Waterfall
-    const RevenueWaterfall = ({ rows }) => {
-      const contracted = rows.reduce((s, r) => s + r["Contracted Revenues (USD)"], 0);
-      const recognized = rows.reduce((s, r) => s + r["Recognition Value (USD)"], 0);
-      const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
-      const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
-      const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
-
-      const data = [
-        { name: "Contracted", value: contracted, color: BRAND_BLACK },
-        { name: "Recognized", value: recognized, color: BRAND_TEAL },
-        { name: "Invoiced", value: invoiced, color: "#3B9DBD" },
-        { name: "Collected", value: collected, color: COLOR_GOOD },
-        { name: "Outstanding", value: unpaid, color: BRAND_RED }
-      ];
-
-      const pct = (v) => contracted > 0 ? ((v/contracted)*100).toFixed(0) : 0;
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.name}</div>
-            <div className="tt-row"><span className="tt-label">Amount</span><span>{fmtMoneyFull(p.value)}</span></div>
-            <div className="tt-row"><span className="tt-label">% of contracted</span><span>{pct(p.value)}%</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#EEE" vertical={false} />
-              <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: "#E5E5E0" }} />
-              <YAxis
-                tickFormatter={(v) => fmtMoney(v)}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(237, 28, 36, 0.05)" }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {data.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="waterfall-labels">
-            {data.map(d => (
-              <div key={d.name} className="waterfall-step">
-                <div className="step-name">{d.name}</div>
-                <div className="step-value">{fmtMoney(d.value)}</div>
-                <div className="step-pct">{pct(d.value)}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
-
-    // Chart: Health Donut
-    const HealthDonut = ({ rows }) => {
-      const counts = { "On Track": 0, "At Risk": 0, "Critical": 0 };
-      rows.forEach(r => { counts[r["Health Status"]] = (counts[r["Health Status"]] || 0) + 1; });
-      const data = [
-        { name: "On Track", value: counts["On Track"], color: COLOR_ONTRACK },
-        { name: "At Risk", value: counts["At Risk"], color: COLOR_ATRISK },
-        { name: "Critical", value: counts["Critical"], color: COLOR_CRITICAL }
-      ].filter(d => d.value > 0);
-      const total = data.reduce((s, d) => s + d.value, 0);
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.name}</div>
-            <div className="tt-row"><span className="tt-label">Projects</span><span>{p.value}</span></div>
-            <div className="tt-row"><span className="tt-label">Share</span><span>{((p.value/total)*100).toFixed(0)}%</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <div style={{position: "relative"}}>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey="value"
-                stroke="none"
-              >
-                {data.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                verticalAlign="bottom"
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{
-            position: "absolute",
-            top: "42%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            textAlign: "center",
-            pointerEvents: "none"
-          }}>
-            <div style={{fontSize: 26, fontWeight: 700, fontFamily: "var(--font-mono)", letterSpacing: "-0.02em"}}>
-              {total}
-            </div>
-            <div style={{fontSize: 10, color: "var(--text-3)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2}}>
-              Projects
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    // Chart: Operational Status
-    const OperationalStatus = ({ rows }) => {
-      const counts = { "Pending": 0, "In Progress": 0, "Completed": 0 };
-      rows.forEach(r => { counts[r["Operational Status"]] = (counts[r["Operational Status"]] || 0) + 1; });
-      const data = Object.entries(counts).map(([name, value]) => ({ name, value }));
-
-      return (
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={90} />
-            <Tooltip cursor={{ fill: "rgba(237, 28, 36, 0.05)" }} />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={
-                  d.name === "Pending" ? "#C0C0B8" :
-                  d.name === "In Progress" ? BRAND_TEAL :
-                  BRAND_BLACK
-                } />
-              ))}
-              <LabelList dataKey="value" position="right" style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, fill: "var(--text)" }} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // Chart: Budget vs Actual Cost by Project
-    const BudgetVsActual = ({ rows }) => {
-      const data = rows
-        .map(r => ({
-          name: r["Project Name"].length > 26 ? r["Project Name"].slice(0, 24) + "…" : r["Project Name"],
-          fullName: r["Project Name"],
-          baseline: r["Cost Basline (USD)"],
-          actual: r["Actual Costs (USD)"],
-          overrun: r["Actual Costs (USD)"] - r["Cost Basline (USD)"]
-        }))
-        .sort((a,b) => b.actual - a.actual);
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.fullName}</div>
-            <div className="tt-row"><span className="tt-label">Baseline</span><span>{fmtMoneyFull(p.baseline)}</span></div>
-            <div className="tt-row"><span className="tt-label">Actual</span><span>{fmtMoneyFull(p.actual)}</span></div>
-            <div className="tt-row"><span className="tt-label">Overrun</span><span style={{color: p.overrun > 0 ? BRAND_RED : COLOR_GOOD}}>{fmtMoneyFull(p.overrun)}</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <ResponsiveContainer width="100%" height={Math.max(280, data.length * 32)}>
-          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={fmtMoney} />
-            <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={{ fontSize: 11 }} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="baseline" name="Cost Baseline" fill={BRAND_TEAL} radius={[0, 2, 2, 0]} />
-            <Bar dataKey="actual" name="Actual Cost" fill={BRAND_RED} radius={[0, 2, 2, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // Chart: GP Baseline vs Actual Cash Flow
-    const GPBaselineVsActual = ({ rows }) => {
-      const data = rows
-        .map(r => ({
-          name: r["Project Name"].length > 22 ? r["Project Name"].slice(0, 20) + "…" : r["Project Name"],
-          fullName: r["Project Name"],
-          baseline: r["GP Baseline (USD)"],
-          actual: r["GP Actual / Cash Flow (USD)"]
-        }))
-        .sort((a,b) => a.actual - b.actual);
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        const delta = p.actual - p.baseline;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.fullName}</div>
-            <div className="tt-row"><span className="tt-label">GP Baseline</span><span>{fmtMoneyFull(p.baseline)}</span></div>
-            <div className="tt-row"><span className="tt-label">GP Actual</span><span style={{color: p.actual >= 0 ? COLOR_GOOD : BRAND_RED}}>{fmtMoneyFull(p.actual)}</span></div>
-            <div className="tt-row"><span className="tt-label">Variance</span><span style={{color: delta >= 0 ? COLOR_GOOD : BRAND_RED}}>{fmtMoneyFull(delta)}</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <ResponsiveContainer width="100%" height={Math.max(280, data.length * 32)}>
-          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={fmtMoney} />
-            <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={160} tick={{ fontSize: 11 }} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine x={0} stroke={BRAND_BLACK} strokeWidth={1.5} />
-            <Bar dataKey="baseline" name="GP Baseline" fill={BRAND_TEAL} radius={[0, 2, 2, 0]} />
-            <Bar dataKey="actual" name="GP Actual" radius={[0, 2, 2, 0]}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={d.actual >= 0 ? COLOR_GOOD : BRAND_RED} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // PM Scorecard
-    const PMScorecard = ({ rows }) => {
-      const byPM = {};
-      rows.forEach(r => {
-        const pm = r["Project Manager"];
-        if (!byPM[pm]) byPM[pm] = { name: pm, projects: 0, contracted: 0, gp: 0, ontrack: 0, atrisk: 0, critical: 0 };
-        byPM[pm].projects += 1;
-        byPM[pm].contracted += r["Contracted Revenues (USD)"];
-        byPM[pm].gp += r["GP Actual / Cash Flow (USD)"];
-        if (r["Health Status"] === "On Track") byPM[pm].ontrack += 1;
-        else if (r["Health Status"] === "At Risk") byPM[pm].atrisk += 1;
-        else if (r["Health Status"] === "Critical") byPM[pm].critical += 1;
-      });
-      const pms = Object.values(byPM).sort((a,b) => b.contracted - a.contracted);
-
-      return (
-        <div>
-          <div style={{display: "grid", gridTemplateColumns: "200px 80px 1fr 80px", gap: 12, padding: "0 0 8px 0", fontSize: 10, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", borderBottom: "2px solid var(--border)"}}>
-            <span>Project Manager</span>
-            <span style={{textAlign: "center"}}>Projects</span>
-            <span>Health Mix</span>
-            <span style={{textAlign: "right"}}>GP Actual</span>
-          </div>
-          {pms.map(pm => {
-            const total = pm.ontrack + pm.atrisk + pm.critical;
-            return (
-              <div key={pm.name} className="pm-row">
-                <span className="pm-name">{pm.name}</span>
-                <span className="pm-projects" style={{textAlign: "center"}}>
-                  {pm.projects} · {fmtMoney(pm.contracted)}
-                </span>
-                <div className="pm-health-bar">
-                  {pm.ontrack > 0 && <div className="seg-ontrack" style={{width: (pm.ontrack/total)*100 + "%"}} title={pm.ontrack + " on track"}></div>}
-                  {pm.atrisk > 0 && <div className="seg-atrisk" style={{width: (pm.atrisk/total)*100 + "%"}} title={pm.atrisk + " at risk"}></div>}
-                  {pm.critical > 0 && <div className="seg-critical" style={{width: (pm.critical/total)*100 + "%"}} title={pm.critical + " critical"}></div>}
-                </div>
-                <span className={"pm-value " + (pm.gp >= 0 ? "positive" : "negative")}>{fmtMoney(pm.gp)}</span>
-              </div>
-            );
-          })}
-        </div>
-      );
-    };
-
-    // Gantt Timeline
-    const ProjectTimeline = ({ rows }) => {
-      const valid = rows.filter(r => r._startDate && r._endDate).sort((a,b) => a._startDate - b._startDate);
-      if (valid.length === 0) return <div className="empty-state">No dated projects in view</div>;
-
-      const minDate = valid.reduce((m, r) => !m || r._startDate < m ? r._startDate : m, null);
-      const maxDate = valid.reduce((m, r) => !m || r._endDate > m ? r._endDate : m, null);
-      const totalMs = maxDate - minDate;
-
-      const toPct = (d) => ((d - minDate) / totalMs) * 100;
-      const healthClass = (h) => h === "On Track" ? "ontrack" : h === "At Risk" ? "atrisk" : "critical";
-
-      return (
-        <div className="gantt">
-          {valid.map((r, i) => {
-            const left = toPct(r._startDate);
-            const width = toPct(r._endDate) - left;
-            return (
-              <div className="gantt-row" key={i}>
-                <div className="gantt-label" title={r["Project Name"]}>{r["Project Name"]}</div>
-                <div className="gantt-track">
-                  <div
-                    className={"gantt-bar " + healthClass(r["Health Status"])}
-                    style={{ left: left + "%", width: Math.max(width, 2) + "%" }}
-                    title={fmtDate(r._startDate) + " → " + fmtDate(r._endDate)}
-                  >
-                    {r["Project Duration (Months)"]}mo
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div className="gantt-axis">
-            <span>{fmtDate(minDate)}</span>
-            <span>{fmtDate(new Date((minDate.getTime() + maxDate.getTime()) / 2))}</span>
-            <span>{fmtDate(maxDate)}</span>
-          </div>
-        </div>
-      );
-    };
-
-    // Profitability Scatter
-    const ProfitabilityScatter = ({ rows }) => {
-      const data = rows.map(r => ({
-        name: r["Project Name"],
-        duration: r["Project Duration (Months)"],
-        margin: r._gpMarginActualPct,
-        contractSize: r["Contracted Revenues (USD)"],
-        health: r["Health Status"]
-      }));
-
-      const byHealth = {
-        "On Track": data.filter(d => d.health === "On Track"),
-        "At Risk": data.filter(d => d.health === "At Risk"),
-        "Critical": data.filter(d => d.health === "Critical")
-      };
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.name}</div>
-            <div className="tt-row"><span className="tt-label">Duration</span><span>{p.duration} months</span></div>
-            <div className="tt-row"><span className="tt-label">Margin</span><span style={{color: p.margin >= 0 ? COLOR_GOOD : BRAND_RED}}>{p.margin.toFixed(1)}%</span></div>
-            <div className="tt-row"><span className="tt-label">Contract</span><span>{fmtMoneyFull(p.contractSize)}</span></div>
-            <div className="tt-row"><span className="tt-label">Status</span><span>{p.health}</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <ResponsiveContainer width="100%" height={280}>
-          <ScatterChart margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" />
-            <XAxis
-              type="number"
-              dataKey="duration"
-              name="Duration"
-              unit="mo"
-              tickLine={false}
-              axisLine={{ stroke: "#E5E5E0" }}
-              label={{ value: "Duration (months)", position: "insideBottom", offset: -10, style: { fontSize: 11, fill: "var(--text-3)" } }}
-            />
-            <YAxis
-              type="number"
-              dataKey="margin"
-              name="Margin"
-              unit="%"
-              tickLine={false}
-              axisLine={false}
-              label={{ value: "Margin %", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "var(--text-3)" } }}
-            />
-            <ZAxis type="number" dataKey="contractSize" range={[50, 500]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3" }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine y={0} stroke={BRAND_BLACK} strokeWidth={1} />
-            <Scatter name="On Track" data={byHealth["On Track"]} fill={COLOR_ONTRACK} />
-            <Scatter name="At Risk" data={byHealth["At Risk"]} fill={COLOR_ATRISK} />
-            <Scatter name="Critical" data={byHealth["Critical"]} fill={COLOR_CRITICAL} />
-          </ScatterChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // Currency Mix
-    const CurrencyMix = ({ rows }) => {
-      const byC = {};
-      rows.forEach(r => {
-        byC[r.Currency] = (byC[r.Currency] || 0) + r["Contracted Revenues (USD)"];
-      });
-      const data = Object.entries(byC).map(([name, value]) => ({ name, value }));
-      const colors = { USD: BRAND_BLACK, EGP: BRAND_RED, AED: BRAND_TEAL, SAR: "#8B5CF6" };
-      const total = data.reduce((s, d) => s + d.value, 0);
-
-      const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-        const p = payload[0].payload;
-        return (
-          <div className="custom-tooltip">
-            <div className="tt-title">{p.name}</div>
-            <div className="tt-row"><span className="tt-label">USD Value</span><span>{fmtMoneyFull(p.value)}</span></div>
-            <div className="tt-row"><span className="tt-label">Share</span><span>{((p.value/total)*100).toFixed(1)}%</span></div>
-          </div>
-        );
-      };
-
-      return (
-        <ResponsiveContainer width="100%" height={240}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              outerRadius={85}
-              dataKey="value"
-              stroke="#fff"
-              strokeWidth={2}
-              label={({name, value}) => name + " " + ((value/total)*100).toFixed(0) + "%"}
-              labelLine={false}
-              style={{ fontSize: 11, fontWeight: 600 }}
-            >
-              {data.map((d, i) => <Cell key={i} fill={colors[d.name] || "#999"} />)}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // Collection Funnel
-    const CollectionFunnel = ({ rows }) => {
-      const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
-      const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
-      const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
-      const notInvoiced = rows.reduce((s, r) => s + r["Not Invoiced Revenues (USD)"], 0);
-
-      const data = [
-        { name: "Not Invoiced", value: notInvoiced, color: "#C0C0B8" },
-        { name: "Invoiced", value: invoiced, color: BRAND_TEAL },
-        { name: "Collected", value: collected, color: COLOR_GOOD },
-        { name: "Unpaid AR", value: unpaid, color: BRAND_RED }
-      ];
-
-      return (
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={data} layout="vertical" margin={{ top: 10, right: 60, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={fmtMoney} />
-            <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={100} tick={{ fontSize: 11 }} />
-            <Tooltip
-              formatter={(value) => [fmtMoneyFull(value), "Amount"]}
-              cursor={{ fill: "rgba(0,0,0,0.03)" }}
-            />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {data.map((d, i) => <Cell key={i} fill={d.color} />)}
-              <LabelList dataKey="value" position="right" formatter={fmtMoney} style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 600, fill: "var(--text)" }} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    };
-
-    // Critical Watchlist Table
-    const CriticalWatchlist = ({ rows }) => {
-      const watchlist = rows
-        .filter(r => ["At Risk","Critical"].includes(r["Health Status"]))
-        .sort((a,b) => a["GP Actual / Cash Flow (USD)"] - b["GP Actual / Cash Flow (USD)"]);
-
-      const statusClass = (h) => {
-        if (h === "On Track") return "status-pill status-ontrack";
-        if (h === "At Risk") return "status-pill status-atrisk";
-        if (h === "Critical") return "status-pill status-critical";
-        if (h === "In Progress") return "status-pill status-inprogress";
-        if (h === "Completed") return "status-pill status-completed";
-        return "status-pill status-pending";
-      };
-
-      if (watchlist.length === 0) {
-        return <div className="empty-state">✅ No at-risk or critical projects in the current selection.</div>;
+    }, "Click to filter"), React.createElement("span", null)));
+  };
+  return React.createElement("div", {
+    style: {
+      position: "relative"
+    },
+    role: "img",
+    "aria-label": "Project health distribution donut"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 240
+  }, React.createElement(PieChart, null, React.createElement(Pie, {
+    data: data,
+    cx: "50%",
+    cy: "50%",
+    innerRadius: 60,
+    outerRadius: 90,
+    paddingAngle: 2,
+    dataKey: "value",
+    stroke: "none",
+    onClick: d => onSliceClick && onSliceClick(d.name),
+    style: {
+      cursor: "pointer"
+    }
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: d.color
+  }))), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null)
+  }), React.createElement(Legend, {
+    verticalAlign: "bottom",
+    iconType: "circle",
+    iconSize: 8,
+    wrapperStyle: {
+      fontSize: 12,
+      paddingTop: 8
+    }
+  }))), React.createElement("div", {
+    className: "donut-center"
+  }, React.createElement("div", {
+    className: "donut-num"
+  }, total), React.createElement("div", {
+    className: "donut-label"
+  }, "Projects")));
+};
+const OperationalStatus = ({
+  rows,
+  onClick
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const counts = {
+    "Pending": 0,
+    "In Progress": 0,
+    "Completed": 0
+  };
+  rows.forEach(r => {
+    counts[r["Operational Status"]] = (counts[r["Operational Status"]] || 0) + 1;
+  });
+  const data = Object.entries(counts).map(([name, value]) => ({
+    name,
+    value
+  }));
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Operational status distribution"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 240
+  }, React.createElement(BarChart, {
+    data: data,
+    layout: "vertical",
+    margin: {
+      top: 10,
+      right: 30,
+      left: 10,
+      bottom: 10
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)",
+    horizontal: false
+  }), React.createElement(XAxis, {
+    type: "number",
+    tickLine: false,
+    axisLine: false,
+    allowDecimals: false
+  }), React.createElement(YAxis, {
+    type: "category",
+    dataKey: "name",
+    tickLine: false,
+    axisLine: false,
+    width: 90
+  }), React.createElement(Tooltip, {
+    cursor: {
+      fill: "rgba(237, 28, 36, 0.08)"
+    }
+  }), React.createElement(Bar, {
+    dataKey: "value",
+    radius: [0, 4, 4, 0],
+    onClick: d => onClick && onClick(d.name),
+    style: {
+      cursor: "pointer"
+    }
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: d.name === "Pending" ? "#C0C0B8" : d.name === "In Progress" ? BRAND_TEAL : BRAND_BLACK
+  })), React.createElement(LabelList, {
+    dataKey: "value",
+    position: "right",
+    style: {
+      fontFamily: "var(--font-mono)",
+      fontSize: 12,
+      fontWeight: 600,
+      fill: "var(--text)"
+    }
+  })))));
+};
+const BudgetVsActual = ({
+  rows
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const data = rows.map(r => ({
+    name: r["Project Name"].length > 26 ? r["Project Name"].slice(0, 24) + "…" : r["Project Name"],
+    fullName: r["Project Name"],
+    baseline: r["Cost Basline (USD)"],
+    actual: r["Actual Costs (USD)"],
+    overrun: r["Actual Costs (USD)"] - r["Cost Basline (USD)"]
+  })).sort((a, b) => b.actual - a.actual);
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.fullName), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Baseline"), React.createElement("span", null, fmtMoneyFull(p.baseline))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Actual"), React.createElement("span", null, fmtMoneyFull(p.actual))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Overrun"), React.createElement("span", {
+      style: {
+        color: p.overrun > 0 ? BRAND_RED : COLOR_GOOD
       }
-
-      return (
-        <div className="table-scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>PM</th>
-                <th>Health</th>
-                <th>Op Status</th>
-                <th style={{textAlign: "right"}}>Contract</th>
-                <th style={{textAlign: "right"}}>Actual Cost</th>
-                <th style={{textAlign: "right"}}>GP (Cash Flow)</th>
-                <th style={{textAlign: "right"}}>Overrun</th>
-              </tr>
-            </thead>
-            <tbody>
-              {watchlist.map((r, i) => (
-                <tr key={i}>
-                  <td style={{fontWeight: 600}}>{r["Project Name"]}</td>
-                  <td style={{color: "var(--text-2)"}}>{r["Project Manager"]}</td>
-                  <td>
-                    <span className={statusClass(r["Health Status"])}>
-                      <span className="pill-dot"></span>
-                      {r["Health Status"]}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={statusClass(r["Operational Status"])}>
-                      {r["Operational Status"]}
-                    </span>
-                  </td>
-                  <td className="num">{fmtMoney(r["Contracted Revenues (USD)"])}</td>
-                  <td className="num">{fmtMoney(r["Actual Costs (USD)"])}</td>
-                  <td className={"num " + (r["GP Actual / Cash Flow (USD)"] >= 0 ? "positive" : "negative")}>
-                    {fmtMoney(r["GP Actual / Cash Flow (USD)"])}
-                  </td>
-                  <td className={"num " + (r._costOverrunPct > 0 ? "negative" : "positive")}>
-                    {r._costOverrunPct >= 0 ? "+" : ""}{r._costOverrunPct.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    };
-
-    // All Projects Table (everything, sortable not implemented to keep scope)
-    const AllProjectsTable = ({ rows }) => {
-      const statusClass = (h) => {
-        if (h === "On Track") return "status-pill status-ontrack";
-        if (h === "At Risk") return "status-pill status-atrisk";
-        if (h === "Critical") return "status-pill status-critical";
-        if (h === "In Progress") return "status-pill status-inprogress";
-        if (h === "Completed") return "status-pill status-completed";
-        return "status-pill status-pending";
-      };
-
-      return (
-        <div className="table-scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>PM</th>
-                <th>Op</th>
-                <th>Health</th>
-                <th>CCY</th>
-                <th style={{textAlign: "right"}}>Contract (USD)</th>
-                <th style={{textAlign: "right"}}>Collected</th>
-                <th style={{textAlign: "right"}}>Unpaid</th>
-                <th style={{textAlign: "right"}}>Actual Cost</th>
-                <th style={{textAlign: "right"}}>GP Actual</th>
-                <th style={{textAlign: "right"}}>Margin %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i}>
-                  <td style={{fontWeight: 600}}>{r["Project Name"]}</td>
-                  <td style={{color: "var(--text-2)"}}>{r["Project Manager"]}</td>
-                  <td><span className={statusClass(r["Operational Status"])}>{r["Operational Status"]}</span></td>
-                  <td>
-                    <span className={statusClass(r["Health Status"])}>
-                      <span className="pill-dot"></span>
-                      {r["Health Status"]}
-                    </span>
-                  </td>
-                  <td style={{fontFamily: "var(--font-mono)", fontSize: 11}}>{r["Currency"]}</td>
-                  <td className="num">{fmtMoney(r["Contracted Revenues (USD)"])}</td>
-                  <td className="num">{fmtMoney(r["Collected Revenues (USD)"])}</td>
-                  <td className="num negative">{fmtMoney(r["Unpaid Revenues (USD)"])}</td>
-                  <td className="num">{fmtMoney(r["Actual Costs (USD)"])}</td>
-                  <td className={"num " + (r["GP Actual / Cash Flow (USD)"] >= 0 ? "positive" : "negative")}>
-                    {fmtMoney(r["GP Actual / Cash Flow (USD)"])}
-                  </td>
-                  <td className={"num " + (r._gpMarginActualPct >= 0 ? "positive" : "negative")}>
-                    {r._gpMarginActualPct.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    };
-
-    // ============================================================
-    // Main App
-    // ============================================================
-
-    const App = () => {
-      const data = useDashboardData();
-      const [filters, setFilters] = React.useState({
-        pms: [], ops: [], health: [], currency: [], search: ""
-      });
-
-      const filteredRows = React.useMemo(() => {
-        return data.rows.filter(r => {
-          if (filters.pms.length && !filters.pms.includes(r["Project Manager"])) return false;
-          if (filters.ops.length && !filters.ops.includes(r["Operational Status"])) return false;
-          if (filters.health.length && !filters.health.includes(r["Health Status"])) return false;
-          if (filters.currency.length && !filters.currency.includes(r["Currency"])) return false;
-          if (filters.search && !r["Project Name"].toLowerCase().includes(filters.search.toLowerCase())) return false;
-          return true;
-        });
-      }, [data.rows, filters]);
-
-      if (data.loading) {
-        return (
-          <>
-            <TopBar source="loading" lastUpdated={null} onRefresh={data.refresh} />
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              Loading portfolio data…
-            </div>
-          </>
-        );
+    }, fmtMoneyFull(p.overrun))));
+  };
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Cost baseline versus actual cost by project"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: Math.max(280, data.length * 32)
+  }, React.createElement(BarChart, {
+    data: data,
+    layout: "vertical",
+    margin: {
+      top: 5,
+      right: 60,
+      left: 10,
+      bottom: 5
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)",
+    horizontal: false
+  }), React.createElement(XAxis, {
+    type: "number",
+    tickLine: false,
+    axisLine: false,
+    tickFormatter: fmtMoney
+  }), React.createElement(YAxis, {
+    type: "category",
+    dataKey: "name",
+    tickLine: false,
+    axisLine: false,
+    width: 180,
+    tick: {
+      fontSize: 11
+    }
+  }), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null),
+    cursor: {
+      fill: "rgba(0,0,0,0.04)"
+    }
+  }), React.createElement(Legend, {
+    wrapperStyle: {
+      fontSize: 11
+    }
+  }), React.createElement(Bar, {
+    dataKey: "baseline",
+    name: "Cost Baseline",
+    fill: BRAND_TEAL,
+    radius: [0, 2, 2, 0]
+  }), React.createElement(Bar, {
+    dataKey: "actual",
+    name: "Actual Cost",
+    fill: BRAND_RED,
+    radius: [0, 2, 2, 0]
+  }))));
+};
+const GPBaselineVsActual = ({
+  rows
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const data = rows.map(r => ({
+    name: r["Project Name"].length > 22 ? r["Project Name"].slice(0, 20) + "…" : r["Project Name"],
+    fullName: r["Project Name"],
+    baseline: r["GP Baseline (USD)"],
+    actual: r["GP Actual / Cash Flow (USD)"]
+  })).sort((a, b) => a.actual - b.actual);
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    const delta = p.actual - p.baseline;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.fullName), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "GP Baseline"), React.createElement("span", null, fmtMoneyFull(p.baseline))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "GP Actual"), React.createElement("span", {
+      style: {
+        color: p.actual >= 0 ? COLOR_GOOD : BRAND_RED
       }
-
-      return (
-        <>
-          <TopBar source={data.source} lastUpdated={data.lastUpdated} onRefresh={data.refresh} />
-          <div className="container">
-            <div className="headline">
-              <h1>Project Portfolio <span className="accent">Intelligence</span></h1>
-              <p>Real-time performance overview of all active projects — contracted revenue, collections, delivery cost, and margin health. Filter by manager, status, health, or currency to focus on what matters now.</p>
-            </div>
-
-            {data.source === "error" && (
-              <div className="error-banner">
-                <strong>Live feed unavailable.</strong> Showing last embedded snapshot. Details: {data.error}
-              </div>
-            )}
-
-            <Filters
-              rows={data.rows}
-              filters={filters}
-              setFilters={setFilters}
-              filteredCount={filteredRows.length}
-            />
-
-            <KpiStrip rows={filteredRows} />
-
-            <InsightsPanel rows={filteredRows} />
-
-            {/* Row 1 — Revenue story */}
-            <div className="grid-12">
-              <div className="card col-8">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Revenue Leakage Waterfall</div>
-                    <div className="card-subtitle">Contracted → Recognized → Invoiced → Collected → Outstanding</div>
-                  </div>
-                </div>
-                <RevenueWaterfall rows={filteredRows} />
-              </div>
-              <div className="card col-4">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Portfolio Health</div>
-                    <div className="card-subtitle">Distribution by status</div>
-                  </div>
-                </div>
-                <HealthDonut rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 2 — Operational & Collection */}
-            <div className="grid-12">
-              <div className="card col-4">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Operational Status</div>
-                    <div className="card-subtitle">Pending · In Progress · Completed</div>
-                  </div>
-                </div>
-                <OperationalStatus rows={filteredRows} />
-              </div>
-              <div className="card col-4">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Cash Collection Funnel</div>
-                    <div className="card-subtitle">Revenue lifecycle in USD</div>
-                  </div>
-                </div>
-                <CollectionFunnel rows={filteredRows} />
-              </div>
-              <div className="card col-4">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Currency Mix</div>
-                    <div className="card-subtitle">Contracted value by currency (USD equivalent)</div>
-                  </div>
-                </div>
-                <CurrencyMix rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 3 — Cost & GP Comparison */}
-            <div className="grid-12">
-              <div className="card col-6">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Cost Baseline vs Actual</div>
-                    <div className="card-subtitle">Where the budget burned — ranked by actual spend</div>
-                  </div>
-                </div>
-                <BudgetVsActual rows={filteredRows} />
-              </div>
-              <div className="card col-6">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">GP Baseline vs Actual Cash Flow</div>
-                    <div className="card-subtitle">Plan vs reality — red bars are cash negative</div>
-                  </div>
-                </div>
-                <GPBaselineVsActual rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 4 — PM & Timeline */}
-            <div className="grid-12">
-              <div className="card col-6">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Project Manager Scorecard</div>
-                    <div className="card-subtitle">Ranked by contracted value · health mix · net GP</div>
-                  </div>
-                </div>
-                <PMScorecard rows={filteredRows} />
-              </div>
-              <div className="card col-6">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Project Timeline</div>
-                    <div className="card-subtitle">Gantt view colored by health status</div>
-                  </div>
-                </div>
-                <ProjectTimeline rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 5 — Profitability scatter full width */}
-            <div className="grid-12">
-              <div className="card col-12">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">Profitability Quadrant</div>
-                    <div className="card-subtitle">Duration vs margin · bubble size = contract value · color = health</div>
-                  </div>
-                </div>
-                <ProfitabilityScatter rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 6 — Critical Watchlist */}
-            <div className="grid-12">
-              <div className="card col-12">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">🚨 Critical Watchlist</div>
-                    <div className="card-subtitle">Projects flagged At Risk or Critical — sorted by cash flow impact</div>
-                  </div>
-                </div>
-                <CriticalWatchlist rows={filteredRows} />
-              </div>
-            </div>
-
-            {/* Row 7 — Full Projects Table */}
-            <div className="grid-12">
-              <div className="card col-12">
-                <div className="card-header">
-                  <div>
-                    <div className="card-title">All Projects</div>
-                    <div className="card-subtitle">Complete register for the current filter selection</div>
-                  </div>
-                </div>
-                <AllProjectsTable rows={filteredRows} />
-              </div>
-            </div>
-
-            <div className="footer">
-              <span>almentor · Project Portfolio Dashboard · Confidential</span>
-              <span>
-                {data.source === "live" ? "Live feed from Google Sheets" : "Embedded snapshot"}
-                {data.lastUpdated && " · Updated " + data.lastUpdated.toLocaleString("en-GB")}
-              </span>
-            </div>
-          </div>
-        </>
-      );
+    }, fmtMoneyFull(p.actual))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Variance"), React.createElement("span", {
+      style: {
+        color: delta >= 0 ? COLOR_GOOD : BRAND_RED
+      }
+    }, fmtMoneyFull(delta))));
+  };
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "GP baseline versus actual cash flow by project"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: Math.max(280, data.length * 32)
+  }, React.createElement(BarChart, {
+    data: data,
+    layout: "vertical",
+    margin: {
+      top: 5,
+      right: 30,
+      left: 10,
+      bottom: 5
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)",
+    horizontal: false
+  }), React.createElement(XAxis, {
+    type: "number",
+    tickLine: false,
+    axisLine: false,
+    tickFormatter: fmtMoney
+  }), React.createElement(YAxis, {
+    type: "category",
+    dataKey: "name",
+    tickLine: false,
+    axisLine: false,
+    width: 160,
+    tick: {
+      fontSize: 11
+    }
+  }), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null),
+    cursor: {
+      fill: "rgba(0,0,0,0.04)"
+    }
+  }), React.createElement(Legend, {
+    wrapperStyle: {
+      fontSize: 11
+    }
+  }), React.createElement(ReferenceLine, {
+    x: 0,
+    stroke: "var(--text)",
+    strokeWidth: 1.5
+  }), React.createElement(Bar, {
+    dataKey: "baseline",
+    name: "GP Baseline",
+    fill: BRAND_TEAL,
+    radius: [0, 2, 2, 0]
+  }), React.createElement(Bar, {
+    dataKey: "actual",
+    name: "GP Actual",
+    radius: [0, 2, 2, 0]
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: d.actual >= 0 ? COLOR_GOOD : BRAND_RED
+  }))))));
+};
+const PMScorecard = ({
+  rows,
+  onPMClick
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const byPM = {};
+  rows.forEach(r => {
+    const pm = r["Project Manager"];
+    if (!byPM[pm]) byPM[pm] = {
+      name: pm,
+      projects: 0,
+      contracted: 0,
+      gp: 0,
+      ontrack: 0,
+      atrisk: 0,
+      critical: 0
     };
-
-    // Mount
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    byPM[pm].projects += 1;
+    byPM[pm].contracted += r["Contracted Revenues (USD)"];
+    byPM[pm].gp += r["GP Actual / Cash Flow (USD)"];
+    if (r["Health Status"] === "On Track") byPM[pm].ontrack += 1;else if (r["Health Status"] === "At Risk") byPM[pm].atrisk += 1;else if (r["Health Status"] === "Critical") byPM[pm].critical += 1;
+  });
+  const pms = Object.values(byPM).sort((a, b) => b.contracted - a.contracted);
+  return React.createElement("div", null, React.createElement("div", {
+    className: "pm-header"
+  }, React.createElement("span", null, "Project Manager"), React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Projects"), React.createElement("span", null, "Health Mix"), React.createElement("span", {
+    style: {
+      textAlign: "right"
+    }
+  }, "GP Actual")), pms.map(pm => {
+    const total = pm.ontrack + pm.atrisk + pm.critical;
+    return React.createElement("div", {
+      key: pm.name,
+      className: "pm-row pm-row-clickable",
+      onClick: () => onPMClick && onPMClick(pm.name),
+      tabIndex: 0,
+      role: "button",
+      "aria-label": "Filter by " + pm.name,
+      onKeyDown: e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPMClick && onPMClick(pm.name);
+        }
+      }
+    }, React.createElement("span", {
+      className: "pm-name"
+    }, pm.name), React.createElement("span", {
+      className: "pm-projects",
+      style: {
+        textAlign: "center"
+      }
+    }, pm.projects, " \xB7 ", fmtMoney(pm.contracted)), React.createElement("div", {
+      className: "pm-health-bar",
+      "aria-label": pm.ontrack + " on track, " + pm.atrisk + " at risk, " + pm.critical + " critical"
+    }, pm.ontrack > 0 && React.createElement("div", {
+      className: "seg-ontrack",
+      style: {
+        width: pm.ontrack / total * 100 + "%"
+      },
+      title: pm.ontrack + " on track"
+    }), pm.atrisk > 0 && React.createElement("div", {
+      className: "seg-atrisk",
+      style: {
+        width: pm.atrisk / total * 100 + "%"
+      },
+      title: pm.atrisk + " at risk"
+    }), pm.critical > 0 && React.createElement("div", {
+      className: "seg-critical",
+      style: {
+        width: pm.critical / total * 100 + "%"
+      },
+      title: pm.critical + " critical"
+    })), React.createElement("span", {
+      className: "pm-value " + (pm.gp >= 0 ? "positive" : "negative")
+    }, fmtMoney(pm.gp)));
+  }));
+};
+const ProjectTimeline = ({
+  rows
+}) => {
+  const valid = rows.filter(r => r._startDate && r._endDate).sort((a, b) => a._startDate - b._startDate);
+  if (valid.length === 0) return React.createElement(EmptyState, {
+    message: "No dated projects in view"
+  });
+  const minDate = valid.reduce((m, r) => !m || r._startDate < m ? r._startDate : m, null);
+  const maxDate = valid.reduce((m, r) => !m || r._endDate > m ? r._endDate : m, null);
+  const totalMs = maxDate - minDate;
+  const toPct = d => (d - minDate) / totalMs * 100;
+  const healthClass = h => h === "On Track" ? "ontrack" : h === "At Risk" ? "atrisk" : "critical";
+  return React.createElement("div", {
+    className: "gantt",
+    role: "img",
+    "aria-label": "Project timeline Gantt chart"
+  }, valid.map((r, i) => {
+    const left = toPct(r._startDate);
+    const width = toPct(r._endDate) - left;
+    return React.createElement("div", {
+      className: "gantt-row",
+      key: i
+    }, React.createElement("div", {
+      className: "gantt-label",
+      title: r["Project Name"]
+    }, r["Project Name"]), React.createElement("div", {
+      className: "gantt-track"
+    }, React.createElement("div", {
+      className: "gantt-bar " + healthClass(r["Health Status"]),
+      style: {
+        left: left + "%",
+        width: Math.max(width, 2) + "%"
+      },
+      title: fmtDate(r._startDate) + " → " + fmtDate(r._endDate)
+    }, r["Project Duration (Months)"], "mo")));
+  }), React.createElement("div", {
+    className: "gantt-axis"
+  }, React.createElement("span", null, fmtDate(minDate)), React.createElement("span", null, fmtDate(new Date((minDate.getTime() + maxDate.getTime()) / 2))), React.createElement("span", null, fmtDate(maxDate))));
+};
+const ProfitabilityScatter = ({
+  rows
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const data = rows.map(r => ({
+    name: r["Project Name"],
+    duration: r["Project Duration (Months)"],
+    margin: r._gpMarginActualPct,
+    contractSize: r["Contracted Revenues (USD)"],
+    health: r["Health Status"]
+  }));
+  const byHealth = {
+    "On Track": data.filter(d => d.health === "On Track"),
+    "At Risk": data.filter(d => d.health === "At Risk"),
+    "Critical": data.filter(d => d.health === "Critical")
+  };
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.name), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Duration"), React.createElement("span", null, p.duration, " months")), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Margin"), React.createElement("span", {
+      style: {
+        color: p.margin >= 0 ? COLOR_GOOD : BRAND_RED
+      }
+    }, p.margin.toFixed(1), "%")), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Contract"), React.createElement("span", null, fmtMoneyFull(p.contractSize))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Status"), React.createElement("span", null, p.health)));
+  };
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Profitability quadrant scatter chart"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 280
+  }, React.createElement(ScatterChart, {
+    margin: {
+      top: 10,
+      right: 20,
+      left: 0,
+      bottom: 20
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)"
+  }), React.createElement(XAxis, {
+    type: "number",
+    dataKey: "duration",
+    name: "Duration",
+    unit: "mo",
+    tickLine: false,
+    axisLine: {
+      stroke: "var(--border-strong)"
+    },
+    label: {
+      value: "Duration (months)",
+      position: "insideBottom",
+      offset: -10,
+      style: {
+        fontSize: 11,
+        fill: "var(--text-3)"
+      }
+    }
+  }), React.createElement(YAxis, {
+    type: "number",
+    dataKey: "margin",
+    name: "Margin",
+    unit: "%",
+    tickLine: false,
+    axisLine: false,
+    label: {
+      value: "Margin %",
+      angle: -90,
+      position: "insideLeft",
+      style: {
+        fontSize: 11,
+        fill: "var(--text-3)"
+      }
+    }
+  }), React.createElement(ZAxis, {
+    type: "number",
+    dataKey: "contractSize",
+    range: [50, 500]
+  }), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null),
+    cursor: {
+      strokeDasharray: "3 3"
+    }
+  }), React.createElement(Legend, {
+    wrapperStyle: {
+      fontSize: 11
+    }
+  }), React.createElement(ReferenceLine, {
+    y: 0,
+    stroke: "var(--text)",
+    strokeWidth: 1
+  }), React.createElement(Scatter, {
+    name: "On Track",
+    data: byHealth["On Track"],
+    fill: COLOR_ONTRACK
+  }), React.createElement(Scatter, {
+    name: "At Risk",
+    data: byHealth["At Risk"],
+    fill: COLOR_ATRISK
+  }), React.createElement(Scatter, {
+    name: "Critical",
+    data: byHealth["Critical"],
+    fill: COLOR_CRITICAL
+  }))));
+};
+const CurrencyMix = ({
+  rows,
+  onCurrencyClick
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const byC = {};
+  rows.forEach(r => {
+    byC[r.Currency] = (byC[r.Currency] || 0) + r["Contracted Revenues (USD)"];
+  });
+  const data = Object.entries(byC).map(([name, value]) => ({
+    name,
+    value
+  }));
+  const colors = {
+    USD: BRAND_BLACK,
+    EGP: BRAND_RED,
+    AED: BRAND_TEAL,
+    SAR: "#8B5CF6"
+  };
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const CustomTooltip = ({
+    active,
+    payload
+  }) => {
+    if (!active || !payload || !payload.length) return null;
+    const p = payload[0].payload;
+    return React.createElement("div", {
+      className: "custom-tooltip"
+    }, React.createElement("div", {
+      className: "tt-title"
+    }, p.name), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "USD Value"), React.createElement("span", null, fmtMoneyFull(p.value))), React.createElement("div", {
+      className: "tt-row"
+    }, React.createElement("span", {
+      className: "tt-label"
+    }, "Share"), React.createElement("span", null, (p.value / total * 100).toFixed(1), "%")));
+  };
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Currency mix pie chart"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 240
+  }, React.createElement(PieChart, null, React.createElement(Pie, {
+    data: data,
+    cx: "50%",
+    cy: "50%",
+    outerRadius: 85,
+    dataKey: "value",
+    stroke: "var(--surface)",
+    strokeWidth: 2,
+    onClick: d => onCurrencyClick && onCurrencyClick(d.name),
+    style: {
+      cursor: "pointer"
+    },
+    label: ({
+      name,
+      value
+    }) => name + " " + (value / total * 100).toFixed(0) + "%",
+    labelLine: false
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: colors[d.name] || "#999"
+  }))), React.createElement(Tooltip, {
+    content: React.createElement(CustomTooltip, null)
+  }))));
+};
+const CollectionFunnel = ({
+  rows
+}) => {
+  if (!rows.length) return React.createElement(EmptyState, null);
+  const invoiced = rows.reduce((s, r) => s + r["Invoiced Revenues (USD)"], 0);
+  const collected = rows.reduce((s, r) => s + r["Collected Revenues (USD)"], 0);
+  const unpaid = rows.reduce((s, r) => s + r["Unpaid Revenues (USD)"], 0);
+  const notInvoiced = rows.reduce((s, r) => s + r["Not Invoiced Revenues (USD)"], 0);
+  const data = [{
+    name: "Not Invoiced",
+    value: notInvoiced,
+    color: "#C0C0B8"
+  }, {
+    name: "Invoiced",
+    value: invoiced,
+    color: BRAND_TEAL
+  }, {
+    name: "Collected",
+    value: collected,
+    color: COLOR_GOOD
+  }, {
+    name: "Unpaid AR",
+    value: unpaid,
+    color: BRAND_RED
+  }];
+  return React.createElement("div", {
+    role: "img",
+    "aria-label": "Cash collection funnel"
+  }, React.createElement(ResponsiveContainer, {
+    width: "100%",
+    height: 240
+  }, React.createElement(BarChart, {
+    data: data,
+    layout: "vertical",
+    margin: {
+      top: 10,
+      right: 60,
+      left: 10,
+      bottom: 10
+    }
+  }, React.createElement(CartesianGrid, {
+    strokeDasharray: "3 3",
+    stroke: "var(--chart-grid)",
+    horizontal: false
+  }), React.createElement(XAxis, {
+    type: "number",
+    tickLine: false,
+    axisLine: false,
+    tickFormatter: fmtMoney
+  }), React.createElement(YAxis, {
+    type: "category",
+    dataKey: "name",
+    tickLine: false,
+    axisLine: false,
+    width: 100,
+    tick: {
+      fontSize: 11
+    }
+  }), React.createElement(Tooltip, {
+    formatter: value => [fmtMoneyFull(value), "Amount"],
+    cursor: {
+      fill: "rgba(0,0,0,0.04)"
+    }
+  }), React.createElement(Bar, {
+    dataKey: "value",
+    radius: [0, 4, 4, 0]
+  }, data.map((d, i) => React.createElement(Cell, {
+    key: i,
+    fill: d.color
+  })), React.createElement(LabelList, {
+    dataKey: "value",
+    position: "right",
+    formatter: fmtMoney,
+    style: {
+      fontFamily: "var(--font-mono)",
+      fontSize: 11,
+      fontWeight: 600,
+      fill: "var(--text)"
+    }
+  })))));
+};
+const SortableTable = ({
+  columns,
+  rows,
+  defaultSort
+}) => {
+  const [sort, setSort] = React.useState(defaultSort || {
+    col: null,
+    dir: "asc"
+  });
+  const sorted = React.useMemo(() => {
+    if (!sort.col) return rows;
+    const col = columns.find(c => c.key === sort.col);
+    if (!col) return rows;
+    return [...rows].sort((a, b) => {
+      const va = col.value(a),
+        vb = col.value(b);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * (sort.dir === "asc" ? 1 : -1);
+      return String(va).localeCompare(String(vb)) * (sort.dir === "asc" ? 1 : -1);
+    });
+  }, [rows, sort, columns]);
+  const onSort = key => setSort(s => s.col === key ? {
+    col: key,
+    dir: s.dir === "asc" ? "desc" : "asc"
+  } : {
+    col: key,
+    dir: "asc"
+  });
+  if (!rows.length) return React.createElement(EmptyState, null);
+  return React.createElement("div", {
+    className: "table-scroll"
+  }, React.createElement("table", {
+    className: "table"
+  }, React.createElement("thead", null, React.createElement("tr", null, columns.map(c => React.createElement("th", {
+    key: c.key,
+    style: {
+      textAlign: c.numeric ? "right" : "left",
+      cursor: "pointer",
+      userSelect: "none"
+    },
+    onClick: () => onSort(c.key),
+    "aria-sort": sort.col === c.key ? sort.dir === "asc" ? "ascending" : "descending" : "none"
+  }, c.label, sort.col === c.key && React.createElement("span", {
+    style: {
+      marginLeft: 4,
+      opacity: 0.6
+    }
+  }, sort.dir === "asc" ? "▲" : "▼"))))), React.createElement("tbody", null, sorted.map((r, i) => React.createElement("tr", {
+    key: i
+  }, columns.map(c => React.createElement("td", {
+    key: c.key,
+    className: c.numeric ? "num" : ""
+  }, c.render ? c.render(r) : c.value(r))))))));
+};
+const statusPillClass = h => {
+  if (h === "On Track") return "status-pill status-ontrack";
+  if (h === "At Risk") return "status-pill status-atrisk";
+  if (h === "Critical") return "status-pill status-critical";
+  if (h === "In Progress") return "status-pill status-inprogress";
+  if (h === "Completed") return "status-pill status-completed";
+  return "status-pill status-pending";
+};
+const CriticalWatchlist = ({
+  rows
+}) => {
+  const watchlist = rows.filter(r => ["At Risk", "Critical"].includes(r["Health Status"])).sort((a, b) => a["GP Actual / Cash Flow (USD)"] - b["GP Actual / Cash Flow (USD)"]);
+  if (watchlist.length === 0) return React.createElement(EmptyState, {
+    message: "\u2713 No at-risk or critical projects in the current selection."
+  });
+  const cols = [{
+    key: "name",
+    label: "Project",
+    value: r => r["Project Name"],
+    render: r => React.createElement("span", {
+      style: {
+        fontWeight: 600
+      }
+    }, r["Project Name"])
+  }, {
+    key: "pm",
+    label: "PM",
+    value: r => r["Project Manager"]
+  }, {
+    key: "health",
+    label: "Health",
+    value: r => r["Health Status"],
+    render: r => React.createElement("span", {
+      className: statusPillClass(r["Health Status"])
+    }, React.createElement("span", {
+      className: "pill-dot"
+    }), r["Health Status"])
+  }, {
+    key: "ops",
+    label: "Op Status",
+    value: r => r["Operational Status"],
+    render: r => React.createElement("span", {
+      className: statusPillClass(r["Operational Status"])
+    }, r["Operational Status"])
+  }, {
+    key: "contract",
+    label: "Contract",
+    numeric: true,
+    value: r => r["Contracted Revenues (USD)"],
+    render: r => fmtMoney(r["Contracted Revenues (USD)"])
+  }, {
+    key: "actual",
+    label: "Actual Cost",
+    numeric: true,
+    value: r => r["Actual Costs (USD)"],
+    render: r => fmtMoney(r["Actual Costs (USD)"])
+  }, {
+    key: "gp",
+    label: "GP (Cash Flow)",
+    numeric: true,
+    value: r => r["GP Actual / Cash Flow (USD)"],
+    render: r => React.createElement("span", {
+      className: r["GP Actual / Cash Flow (USD)"] >= 0 ? "positive" : "negative"
+    }, fmtMoney(r["GP Actual / Cash Flow (USD)"]))
+  }, {
+    key: "overrun",
+    label: "Overrun",
+    numeric: true,
+    value: r => r._costOverrunPct,
+    render: r => React.createElement("span", {
+      className: r._costOverrunPct > 0 ? "negative" : "positive"
+    }, r._costOverrunPct >= 0 ? "+" : "", r._costOverrunPct.toFixed(1), "%")
+  }];
+  return React.createElement(SortableTable, {
+    columns: cols,
+    rows: watchlist,
+    defaultSort: {
+      col: "gp",
+      dir: "asc"
+    }
+  });
+};
+const AllProjectsTable = ({
+  rows
+}) => {
+  const cols = [{
+    key: "name",
+    label: "Project",
+    value: r => r["Project Name"],
+    render: r => React.createElement("span", {
+      style: {
+        fontWeight: 600
+      }
+    }, r["Project Name"])
+  }, {
+    key: "pm",
+    label: "PM",
+    value: r => r["Project Manager"]
+  }, {
+    key: "ops",
+    label: "Op",
+    value: r => r["Operational Status"],
+    render: r => React.createElement("span", {
+      className: statusPillClass(r["Operational Status"])
+    }, r["Operational Status"])
+  }, {
+    key: "health",
+    label: "Health",
+    value: r => r["Health Status"],
+    render: r => React.createElement("span", {
+      className: statusPillClass(r["Health Status"])
+    }, React.createElement("span", {
+      className: "pill-dot"
+    }), r["Health Status"])
+  }, {
+    key: "ccy",
+    label: "CCY",
+    value: r => r["Currency"],
+    render: r => React.createElement("span", {
+      style: {
+        fontFamily: "var(--font-mono)",
+        fontSize: 11
+      }
+    }, r["Currency"])
+  }, {
+    key: "contract",
+    label: "Contract",
+    numeric: true,
+    value: r => r["Contracted Revenues (USD)"],
+    render: r => fmtMoney(r["Contracted Revenues (USD)"])
+  }, {
+    key: "collected",
+    label: "Collected",
+    numeric: true,
+    value: r => r["Collected Revenues (USD)"],
+    render: r => fmtMoney(r["Collected Revenues (USD)"])
+  }, {
+    key: "unpaid",
+    label: "Unpaid",
+    numeric: true,
+    value: r => r["Unpaid Revenues (USD)"],
+    render: r => React.createElement("span", {
+      className: "negative"
+    }, fmtMoney(r["Unpaid Revenues (USD)"]))
+  }, {
+    key: "actual",
+    label: "Actual Cost",
+    numeric: true,
+    value: r => r["Actual Costs (USD)"],
+    render: r => fmtMoney(r["Actual Costs (USD)"])
+  }, {
+    key: "gp",
+    label: "GP Actual",
+    numeric: true,
+    value: r => r["GP Actual / Cash Flow (USD)"],
+    render: r => React.createElement("span", {
+      className: r["GP Actual / Cash Flow (USD)"] >= 0 ? "positive" : "negative"
+    }, fmtMoney(r["GP Actual / Cash Flow (USD)"]))
+  }, {
+    key: "margin",
+    label: "Margin %",
+    numeric: true,
+    value: r => r._gpMarginActualPct,
+    render: r => React.createElement("span", {
+      className: r._gpMarginActualPct >= 0 ? "positive" : "negative"
+    }, r._gpMarginActualPct.toFixed(1), "%")
+  }];
+  return React.createElement(SortableTable, {
+    columns: cols,
+    rows: rows,
+    defaultSort: {
+      col: "contract",
+      dir: "desc"
+    }
+  });
+};
+const App = () => {
+  const data = useDashboardData();
+  const [theme, toggleTheme] = useTheme();
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [filters, setFilters] = React.useState({
+    pms: [],
+    ops: [],
+    health: [],
+    currency: [],
+    search: "",
+    dateFrom: "",
+    dateTo: ""
+  });
+  const filteredRows = React.useMemo(() => {
+    return data.rows.filter(r => {
+      if (filters.pms.length && !filters.pms.includes(r["Project Manager"])) return false;
+      if (filters.ops.length && !filters.ops.includes(r["Operational Status"])) return false;
+      if (filters.health.length && !filters.health.includes(r["Health Status"])) return false;
+      if (filters.currency.length && !filters.currency.includes(r["Currency"])) return false;
+      if (filters.search && !r["Project Name"].toLowerCase().includes(filters.search.toLowerCase())) return false;
+      if (filters.dateFrom && r._startDate && r._startDate < new Date(filters.dateFrom)) return false;
+      if (filters.dateTo && r._endDate && r._endDate > new Date(filters.dateTo)) return false;
+      return true;
+    });
+  }, [data.rows, filters]);
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await data.refresh();
+    setRefreshing(false);
+  }, [data]);
+  const handleExportCSV = React.useCallback(() => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCSV(filteredRows, "almentor-portfolio-" + stamp + ".csv");
+  }, [filteredRows]);
+  const drillByPM = pm => setFilters(f => ({
+    ...f,
+    pms: f.pms.includes(pm) ? f.pms.filter(p => p !== pm) : [...f.pms, pm]
+  }));
+  const drillByHealth = h => setFilters(f => ({
+    ...f,
+    health: f.health.includes(h) ? f.health.filter(x => x !== h) : [...f.health, h]
+  }));
+  const drillByOps = s => setFilters(f => ({
+    ...f,
+    ops: f.ops.includes(s) ? f.ops.filter(x => x !== s) : [...f.ops, s]
+  }));
+  const drillByCurrency = c => setFilters(f => ({
+    ...f,
+    currency: f.currency.includes(c) ? f.currency.filter(x => x !== c) : [...f.currency, c]
+  }));
+  if (data.loading) {
+    return React.createElement(React.Fragment, null, React.createElement(TopBar, {
+      source: "loading",
+      lastUpdated: null,
+      onRefresh: handleRefresh,
+      theme: theme,
+      toggleTheme: toggleTheme,
+      onExportCSV: handleExportCSV,
+      refreshing: refreshing
+    }), React.createElement("div", {
+      className: "loading"
+    }, React.createElement("div", {
+      className: "loading-spinner",
+      "aria-hidden": "true"
+    }), "Loading portfolio data\u2026"));
+  }
+  return React.createElement(React.Fragment, null, React.createElement(TopBar, {
+    source: data.source,
+    lastUpdated: data.lastUpdated,
+    onRefresh: handleRefresh,
+    theme: theme,
+    toggleTheme: toggleTheme,
+    onExportCSV: handleExportCSV,
+    refreshing: refreshing
+  }), React.createElement("main", {
+    className: "container",
+    id: "main"
+  }, React.createElement("div", {
+    className: "headline"
+  }, React.createElement("h1", null, "Project Portfolio ", React.createElement("span", {
+    className: "accent"
+  }, "Intelligence")), React.createElement("p", null, "Real-time performance overview of all active projects \u2014 contracted revenue, collections, delivery cost, and margin health. Filter by manager, status, health, currency, or date range to focus on what matters now.")), data.source === "error" && React.createElement("div", {
+    className: "error-banner",
+    role: "alert"
+  }, React.createElement("strong", null, "Live feed unavailable."), " Showing last embedded snapshot. Details: ", data.error), React.createElement(Filters, {
+    rows: data.rows,
+    filters: filters,
+    setFilters: setFilters,
+    filteredCount: filteredRows.length
+  }), filteredRows.length === 0 ? React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 40,
+      textAlign: "center"
+    }
+  }, React.createElement("h2", {
+    style: {
+      margin: "0 0 8px 0",
+      fontSize: 18
+    }
+  }, "No projects match the current filters."), React.createElement("p", {
+    style: {
+      margin: 0,
+      color: "var(--text-3)"
+    }
+  }, "Try resetting filters or broadening your selection."), React.createElement("button", {
+    className: "filter-reset",
+    style: {
+      marginTop: 16
+    },
+    onClick: () => setFilters({
+      pms: [],
+      ops: [],
+      health: [],
+      currency: [],
+      search: "",
+      dateFrom: "",
+      dateTo: ""
+    })
+  }, "Reset Filters")) : React.createElement(React.Fragment, null, React.createElement(KpiStrip, {
+    rows: filteredRows
+  }), React.createElement(InsightsPanel, {
+    rows: filteredRows
+  }), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-8",
+    "aria-label": "Revenue leakage waterfall"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Revenue Leakage Waterfall"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Contracted \u2192 Recognized \u2192 Invoiced \u2192 Collected \u2192 Outstanding"))), React.createElement(RevenueWaterfall, {
+    rows: filteredRows
+  })), React.createElement("section", {
+    className: "card col-4",
+    "aria-label": "Portfolio health"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Portfolio Health"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Click a slice to drill down"))), React.createElement(HealthDonut, {
+    rows: filteredRows,
+    onSliceClick: drillByHealth
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-4",
+    "aria-label": "Operational status"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Operational Status"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Click a bar to drill down"))), React.createElement(OperationalStatus, {
+    rows: filteredRows,
+    onClick: drillByOps
+  })), React.createElement("section", {
+    className: "card col-4",
+    "aria-label": "Cash collection funnel"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Cash Collection Funnel"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Revenue lifecycle in USD"))), React.createElement(CollectionFunnel, {
+    rows: filteredRows
+  })), React.createElement("section", {
+    className: "card col-4",
+    "aria-label": "Currency mix"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Currency Mix"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Click a slice to drill down"))), React.createElement(CurrencyMix, {
+    rows: filteredRows,
+    onCurrencyClick: drillByCurrency
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-6",
+    "aria-label": "Cost baseline vs actual"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Cost Baseline vs Actual"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Where the budget burned \u2014 ranked by actual spend"))), React.createElement(BudgetVsActual, {
+    rows: filteredRows
+  })), React.createElement("section", {
+    className: "card col-6",
+    "aria-label": "GP baseline vs actual"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "GP Baseline vs Actual Cash Flow"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Plan vs reality \u2014 red bars are cash negative"))), React.createElement(GPBaselineVsActual, {
+    rows: filteredRows
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-6",
+    "aria-label": "PM scorecard"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Project Manager Scorecard"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Click a row to filter by PM"))), React.createElement(PMScorecard, {
+    rows: filteredRows,
+    onPMClick: drillByPM
+  })), React.createElement("section", {
+    className: "card col-6",
+    "aria-label": "Project timeline"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Project Timeline"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Gantt view colored by health status"))), React.createElement(ProjectTimeline, {
+    rows: filteredRows
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-12",
+    "aria-label": "Profitability quadrant"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Profitability Quadrant"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Duration vs margin \xB7 bubble size = contract value \xB7 color = health"))), React.createElement(ProfitabilityScatter, {
+    rows: filteredRows
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-12",
+    "aria-label": "Critical watchlist"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "Critical Watchlist"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Projects flagged At Risk or Critical \u2014 sortable"))), React.createElement(CriticalWatchlist, {
+    rows: filteredRows
+  }))), React.createElement("div", {
+    className: "grid-12"
+  }, React.createElement("section", {
+    className: "card col-12",
+    "aria-label": "All projects"
+  }, React.createElement("div", {
+    className: "card-header"
+  }, React.createElement("div", null, React.createElement("h2", {
+    className: "card-title"
+  }, "All Projects"), React.createElement("div", {
+    className: "card-subtitle"
+  }, "Sortable register \u2014 click any column header"))), React.createElement(AllProjectsTable, {
+    rows: filteredRows
+  })))), React.createElement("footer", {
+    className: "footer"
+  }, React.createElement("span", null, "almentor \xB7 Project Portfolio Dashboard \xB7 Confidential"), React.createElement("span", null, data.source === "live" ? "Live feed from Google Sheets" : "Embedded snapshot", data.lastUpdated && " · Updated " + data.lastUpdated.toLocaleString("en-GB")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App, null));
   </script>
 </body>
 </html>
